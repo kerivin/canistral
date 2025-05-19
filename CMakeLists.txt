@@ -22,13 +22,17 @@ if(WIN32)
 
     find_path(SQLite3_INCLUDE_DIR
         NAMES sqlite3.h
-        PATHS "${SQLite3_DIR}"
+        PATHS
+        "C:/SQLite"
+        "C:/Program Files/SQLite"
         REQUIRED
     )
     
     find_library(SQLite3_LIBRARY
         NAMES sqlite3 sqlite3.lib
-        PATHS "${SQLite3_DIR}"
+        PATHS
+        "C:/SQLite"
+        "C:/Program Files/SQLite"
         REQUIRED
     )
 
@@ -36,7 +40,9 @@ if(WIN32)
         # Fallback to DLL if static lib not found
         find_file(SQLite3_DLL
             NAMES sqlite3.dll
-            PATHS "${SQLite3_DIR}"
+            PATHS
+            "C:/SQLite"
+            "C:/Program Files/SQLite"
             REQUIRED
         )
         set(SQLite3_LIBRARY ${SQLite3_DLL})
