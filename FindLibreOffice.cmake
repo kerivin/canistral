@@ -9,6 +9,7 @@ if(WIN32)
     execute_process(COMMAND ${LibreOffice_DIR}/setsdkenv_windows.bat)
 elseif(APPLE)
     set(LibreOffice_DIR "/usr/local/opt/libreoffice/sdk" CACHE PATH "LibreOffice SDK path" FORCE)
+    execute_process(COMMAND ls -la ${LibreOffice_DIR}/lib/)
     set(LibreOffice_INCLUDE_DIRS
         "/Applications/LibreOffice.app/Contents/Resources/include"
     )
@@ -18,6 +19,7 @@ elseif(APPLE)
     execute_process(COMMAND ${LibreOffice_DIR}/setsdkenv_unix.sh)
 else()
     set(LibreOffice_DIR "/usr/lib/libreoffice/sdk" CACHE PATH "LibreOffice SDK path" FORCE)
+    execute_process(COMMAND ls -la ${LibreOffice_DIR}/lib/)
     set(LibreOffice_INCLUDE_DIRS 
         "${LibreOffice_DIR}/include"
     )
