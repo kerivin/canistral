@@ -61,34 +61,11 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install Dependencies
-      shell: powershell
+      shell: cmd
       run: scripts/install_windows.bat
 
-    - name: Setup vcpkg
-      uses: lukka/run-vcpkg@v10
-      with:
-        vcpkgDirectory: '${{ env.VCPKG_DIR }}/vcpkg'
-
-    - name: Install Qt
-      uses: jurplel/install-qt-action@v4
-      with:
-        version: '6.4.2'
-      env:
-        CMAKE_PREFIX_PATH: ${{ env.QT_ROOT_DIR }}/lib/cmake/Qt6GuiTools
-      
-    - name: Install Vulkan SDK
-      uses: jakoch/install-vulkan-sdk-action@v1
-
-    - name: Install SQLite3
-      run: |
-        .\vcpkg\vcpkg install sqlite3:x64-windows
-        echo "VCPKG_DIR=${{ github.workspace }}/vcpkg" >> $env:GITHUB_ENV
-
     - name: Configure
-      run: |
-        cmake -B build -DCMAKE_BUILD_TYPE=Release `
-          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_DIR/scripts/buildsystems/vcpkg.cmake" `
-          -DSQLite3_DIR="$env:VCPKG_DIR/installed/x64-windows"
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
     - name: Build
       run: cmake --build build --config Release --parallel 4
