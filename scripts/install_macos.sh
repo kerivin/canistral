@@ -1,1 +1,1 @@
-brew install qt@6 sqlite libreoffice vulkan-sdk cmake
+brew install qt@6 sqlite libreoffice molten-vk cmake
