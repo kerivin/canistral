@@ -70,6 +70,9 @@ jobs:
         version: '6.4.2'
       env:
         CMAKE_PREFIX_PATH: ${{ env.QT_ROOT_DIR }}/lib/cmake/Qt6GuiTools
+
+    - name: Install SQLite
+      uses: ryohidaka/action-setup-sqlite@v1.2.0
       
     - name: Install Vulkan SDK
       uses: jakoch/install-vulkan-sdk-action@v1
