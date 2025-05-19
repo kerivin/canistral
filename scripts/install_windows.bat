@@ -1,1 +1,1 @@
-choco install -y cmake libreoffice-fresh sqlite vulkan-sdk
+choco install -y cmake libreoffice-fresh sqlite
