@@ -6,7 +6,7 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install Dependencies
       run: sh scripts/install_macos.sh
@@ -21,11 +21,10 @@ jobs:
       run: |
         mkdir -p artifact
         cp build/Canistral artifact/
-        # Create .app bundle if needed
         hdiutil create -volname Canistral -srcfolder artifact -ov Canistral-macOS.dmg
       
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Canistral-macOS
         path: Canistral-macOS.dmg

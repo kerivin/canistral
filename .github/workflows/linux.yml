@@ -6,7 +6,7 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install Dependencies
       run: sh scripts/install_linux.sh
@@ -24,7 +24,7 @@ jobs:
         tar czf Canistral-Linux.tar.gz artifact/*
       
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Canistral-Linux
         path: Canistral-Linux.tar.gz

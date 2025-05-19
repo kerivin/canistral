@@ -6,7 +6,7 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install Dependencies
       shell: powershell
@@ -26,7 +26,7 @@ jobs:
         7z a "Canistral-Windows.zip" artifact/*
       
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Canistral-Windows
         path: Canistral-Windows.zip
