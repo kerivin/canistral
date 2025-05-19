@@ -3,7 +3,7 @@
 if not exist "%ProgramData%\chocolatey\bin\choco.exe" (
     echo Installing Chocolatey...
     powershell -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))"
-    set PATH=%PATH%;%ProgramData%\chocolatey\bin
+    set PATH "%PATH%;%ProgramData%\chocolatey\bin" /M
 )
 
 echo Installing LibreOffice SDK...
@@ -37,9 +37,9 @@ where qmake
 where sqlite3
 
 echo Adding environment variables to current session...
-set PATH "%PATH%;%ProgramFiles%\LibreOffice\program"
-set PATH "%PATH%;%ProgramFiles%\SQLite"
-set PATH "%PATH%;%QT_DIR%\bin"
+set PATH "%PATH%;%ProgramFiles%\LibreOffice\program" /M
+set PATH "%PATH%;%ProgramFiles%\SQLite" /M
+set PATH "%PATH%;%QT_DIR%\bin" /M
 
 refreshenv
 
