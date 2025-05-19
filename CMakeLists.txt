@@ -23,26 +23,24 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 find_package(SQLite3 REQUIRED)
 find_package(LibreOffice REQUIRED)
 
-if(NOT SQLite3_FOUND)
-    find_path(SQLite3_INCLUDE_DIR sqlite3.h
-        PATHS
-        /usr/include
-        /usr/local/include
-        "C:/SQLite"
-        "C:/Program Files/SQLite"
-        REQUIRED
-    )
-    
-    find_library(SQLite3_LIBRARY
-        NAMES sqlite3 sqlite3.lib
-        PATHS
-        /usr/lib
-        /usr/local/lib
-        "C:/SQLite"
-        "C:/Program Files/SQLite"
-        REQUIRED
-    )
-endif()
+find_path(SQLite3_INCLUDE_DIR sqlite3.h
+    PATHS
+    /usr/include
+    /usr/local/include
+    "C:/SQLite"
+    "C:/Program Files/SQLite"
+    REQUIRED
+)
+
+find_library(SQLite3_LIBRARY
+    NAMES sqlite3 sqlite3.lib
+    PATHS
+    /usr/lib
+    /usr/local/lib
+    "C:/SQLite"
+    "C:/Program Files/SQLite"
+    REQUIRED
+)
 
 message(STATUS "CMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}")
 message(STATUS "LibreOffice: ${LibreOffice_DIR}")
