@@ -1,0 +1,84 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: sh scripts/install_linux.sh
+
+    - name: Configure
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -GNinja
+
+    - name: Linux Build
+      run: cmake --build build --parallel $(nproc)
+
+    - name: Package
+      run: |
+        mkdir -p artifact
+        cp build/Canistral artifact/
+        tar czf Canistral-Linux.tar.gz artifact/*
+      
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Canistral-Linux
+        path: Canistral-Linux.tar.gz
+
+  macOS:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: sh scripts/install_macos.sh
+
+    - name: Configure
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: MacOS Build
+      run: cmake --build build --parallel $(sysctl -n hw.ncpu)
+
+    - name: Package
+      run: |
+        mkdir -p artifact
+        cp build/Canistral artifact/
+        hdiutil create -volname Canistral -srcfolder artifact -ov Canistral-macOS.dmg
+      
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Canistral-macOS
+        path: Canistral-macOS.dmg
+
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      shell: powershell
+      run: scripts/install_windows.bat
+
+    - name: Configure
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: cmake --build build --config Release --parallel 4
+
+    - name: Package
+      run: |
+        mkdir artifact
+        copy "build\Release\Canistral.exe" artifact/
+        copy "build\Release\*.dll" artifact/
+        7z a "Canistral-Windows.zip" artifact/*
+      
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Canistral-Windows
+        path: Canistral-Windows.zip

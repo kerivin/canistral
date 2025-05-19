@@ -12,7 +12,7 @@ set(CMAKE_MODULE_PATH
 
 if(WIN32)
     message(WARNING "WINDOWS BUILD HASN'T BEEN TESTED")
-    execute_process(COMMAND scripts/install_windows.cmd)
+    execute_process(COMMAND scripts/install_windows.bat)
 elseif(APPLE)
     message(WARNING "MACOS BUILD HASN'T BEEN TESTED")
     execute_process(COMMAND sh scripts/install_macos.sh)
