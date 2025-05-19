@@ -61,6 +61,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install Dependencies
+      shell: powershell
       run: scripts/install_windows.bat
 
     - name: Configure
