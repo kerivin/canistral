@@ -37,9 +37,9 @@ where qmake
 where sqlite3
 
 echo Adding environment variables to current session...
-set PATH=%PATH%;%ProgramFiles%\LibreOffice\program
-set PATH=%PATH%;%ProgramFiles%\SQLite
-set PATH=%PATH%;%QT_DIR%\bin
+set PATH "%PATH%;%ProgramFiles%\LibreOffice\program"
+set PATH "%PATH%;%ProgramFiles%\SQLite"
+set PATH "%PATH%;%QT_DIR%\bin"
 
 refreshenv
 
