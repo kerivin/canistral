@@ -67,7 +67,7 @@ jobs:
     - name: Setup vcpkg
       uses: lukka/run-vcpkg@v10
       with:
-        vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+        vcpkgDirectory: '${{ env.VCPKG_DIR }}/vcpkg'
 
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
