@@ -6,17 +6,16 @@ if(WIN32)
     set(LibreOffice_LIBRARIES
         "C:/Program Files/LibreOffice/program/cppuhelper.dll"
     )
-    list(APPEND CMAKE_MODULE_PATH C:/Qt/6.4.2/mingw_64/lib/cmake)
+    list(APPEND CMAKE_MODULE_PATH C:/Qt/6.4.2/mingw_64/lib/cmake/Qt6)
     execute_process(COMMAND ${LibreOffice_DIR}/setsdkenv_windows.bat)
 elseif(APPLE)
     set(LibreOffice_DIR "/usr/local/opt/libreoffice/sdk" CACHE PATH "LibreOffice SDK path" FORCE)
-    execute_process(COMMAND ls -la ${LibreOffice_DIR})
-    execute_process(COMMAND ls -la /Applications/LibreOffice.app/Contents/Resources/lib/)
+    execute_process(COMMAND find /Applications/LibreOffice.app -name "libuno_cppuhelper*")
     set(LibreOffice_INCLUDE_DIRS
         "/Applications/LibreOffice.app/Contents/Resources/include"
     )
     set(LibreOffice_LIBRARIES
-        "/Applications/LibreOffice.app/Contents/Resources/lib/libcppuhelper.dylib"
+        "/Applications/LibreOffice.app/Contents/Resources/lib/libuno_cppuhelpergcc3.dylib"
     )
     execute_process(COMMAND ${LibreOffice_DIR}/setsdkenv_unix.sh)
 else()

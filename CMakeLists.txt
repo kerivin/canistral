@@ -26,6 +26,7 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 find_package(SQLite3 REQUIRED)
 find_package(LibreOffice REQUIRED)
 
+message(STATUS "CMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}")
 message(STATUS "LibreOffice at: ${LibreOffice_DIR}")
 message(STATUS "LibreOffice headers at: ${LibreOffice_INCLUDE_DIRS}")
 message(STATUS "LibreOffice libraries at: ${LibreOffice_LIBRARIES}")
