@@ -63,7 +63,8 @@ jobs:
     - name: Install Dependencies
       shell: cmd
       run: |
-        scripts\install_deps.bat
+        cd scripts
+        call install_windows.bat
 
     - name: Configure
       run: cmake -B build -DCMAKE_BUILD_TYPE=Release
