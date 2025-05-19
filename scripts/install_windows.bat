@@ -1,19 +1,26 @@
 @echo off
+
+if not exist "%ProgramData%\chocolatey\bin\choco.exe" (
+    echo Installing Chocolatey...
+    powershell -Command "Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))"
+    set PATH=%PATH%;%ProgramData%\chocolatey\bin
+)
+
 echo Installing LibreOffice SDK...
-choco install libreoffice-sdk -y --params="/AddToPath"
+choco install libreoffice-sdk -y --no-progress --params="/AddToPath"
 setx LibreOffice_DIR "C:\Program Files\LibreOffice\sdk" /M
 
 refreshenv
 
 echo Installing SQLite3...
-choco install sqlite --installargs="ADDLOCAL=IncludeFiles,LibraryFiles" -y
+choco install sqlite --installargs="ADDLOCAL=IncludeFiles,LibraryFiles" -y --no-progress
 setx SQLite3_DIR "C:\Program Files\SQLite" /M
 
 refreshenv
 
 echo Installing Qt6 via choco...
-choco install qtcreator -y
-choco install qt6 -y --params="ADD_TO_PATH=1"
+choco install qtcreator -y --no-progress
+choco install qt6 -y --no-progress --params="ADD_TO_PATH=1"
 setx QT_DIR "C:\Qt\6.9.0\msvc2022_64" /M
 setx PATH "%PATH%;C:\Qt\6.9.0\msvc2022_64\bin" /M
 

@@ -61,7 +61,9 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install Dependencies
-      run: scripts/install_windows.bat
+      shell: cmd
+      run: |
+        scripts\install_deps.bat
 
     - name: Configure
       run: cmake -B build -DCMAKE_BUILD_TYPE=Release
