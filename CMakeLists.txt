@@ -17,6 +17,57 @@ else()
     execute_process(COMMAND sh scripts/install_linux.sh)
 endif()
 
+if(WIN32)
+    set(SQLite3_DIR "C:/SQLite" CACHE PATH "SQLite3 directory")
+    message(STATUS "SQLite3_DIR=${SQLite3_DIR}")
+
+    find_path(SQLite3_INCLUDE_DIR
+        NAMES sqlite3.h
+        PATHS
+        "C:/"
+        "C:/Chocolatey"
+        "C:/Chocolatey/SQLite"
+        "C:/SQLite"
+        "C:/SQLite3"
+        "C:/Program Files/SQLite"
+        REQUIRED
+    )
+    
+    find_library(SQLite3_LIBRARY
+        NAMES sqlite3 sqlite3.lib
+        PATHS
+        "C:/"
+        "C:/Chocolatey"
+        "C:/Chocolatey/SQLite"
+        "C:/SQLite"
+        "C:/SQLite3"
+        "C:/Program Files/SQLite"
+        REQUIRED
+    )
+
+    if(NOT SQLite3_LIBRARY)
+        # Fallback to DLL if static lib not found
+        find_file(SQLite3_DLL
+            NAMES sqlite3.dll
+            PATHS
+            "C:/"
+            "C:/Chocolatey"
+            "C:/Chocolatey/SQLite"
+            "C:/SQLite"
+            "C:/SQLite3"
+            "C:/Program Files/SQLite"
+            REQUIRED
+        )
+        set(SQLite3_LIBRARY ${SQLite3_DLL})
+    endif()
+
+    add_library(SQLite3::SQLite3 UNKNOWN IMPORTED)
+    set_target_properties(SQLite3::SQLite3 PROPERTIES
+        IMPORTED_LOCATION "${SQLite3_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${SQLite3_INCLUDE_DIR}"
+    )
+endif()
+
 # Find dependencies
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 find_package(SQLite3 REQUIRED)
