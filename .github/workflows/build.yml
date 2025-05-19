@@ -61,7 +61,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install Dependencies
-      shell: cmd
+      shell: powershell
       run: |
         call ./scripts/install_windows.bat
 
