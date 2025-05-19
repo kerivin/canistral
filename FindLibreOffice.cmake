@@ -7,6 +7,7 @@ if(WIN32)
         "C:/Program Files/LibreOffice/program/cppuhelper.dll"
     )
     execute_process(COMMAND ${LibreOffice_DIR}/setsdkenv_windows.bat)
+    set(SQLite3_DIR "C:/Program Files/SQLite" CACHE PATH "SQLite3 path" FORCE)
 elseif(APPLE)
     set(LibreOffice_DIR "/usr/local/opt/libreoffice/sdk" CACHE PATH "LibreOffice SDK path" FORCE)
     execute_process(COMMAND find /Applications/LibreOffice.app -name "libuno_cppuhelper*.dylib")

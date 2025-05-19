@@ -24,9 +24,11 @@ find_package(SQLite3 REQUIRED)
 find_package(LibreOffice REQUIRED)
 
 message(STATUS "CMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}")
-message(STATUS "LibreOffice at: ${LibreOffice_DIR}")
-message(STATUS "LibreOffice headers at: ${LibreOffice_INCLUDE_DIRS}")
-message(STATUS "LibreOffice libraries at: ${LibreOffice_LIBRARIES}")
+message(STATUS "LibreOffice: ${LibreOffice_DIR}")
+message(STATUS "LibreOffice Include: ${LibreOffice_INCLUDE_DIRS}")
+message(STATUS "LibreOffice Library: ${LibreOffice_LIBRARIES}")
+message(STATUS "SQLite3 Include: ${SQLite3_INCLUDE_DIR}")
+message(STATUS "SQLite3 Library: ${SQLite3_LIBRARY}")
 
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 
