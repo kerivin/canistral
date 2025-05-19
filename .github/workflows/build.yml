@@ -64,6 +64,13 @@ jobs:
       shell: powershell
       run: scripts/install_windows.bat
 
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: '6.4.2'
+      env:
+        CMAKE_PREFIX_PATH: ${{ env.QT_ROOT_DIR }}/lib/cmake/Qt6GuiTools
+
     - name: Configure
       run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 

@@ -6,8 +6,6 @@ if(WIN32)
     set(LibreOffice_LIBRARIES
         "C:/Program Files/LibreOffice/program/cppuhelper.dll"
     )
-    execute_process(COMMAND find C:/ -iname '*Qt6GuiTools*')
-    list(APPEND CMAKE_MODULE_PATH C:/Qt6/6.4.2/mingw_64)
     execute_process(COMMAND ${LibreOffice_DIR}/setsdkenv_windows.bat)
 elseif(APPLE)
     set(LibreOffice_DIR "/usr/local/opt/libreoffice/sdk" CACHE PATH "LibreOffice SDK path" FORCE)
