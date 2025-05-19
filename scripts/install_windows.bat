@@ -1,17 +1,16 @@
+@echo off
 echo Installing LibreOffice SDK...
 choco install libreoffice-sdk -y --params="/AddToPath"
 setx LibreOffice_DIR "C:\Program Files\LibreOffice\sdk" /M
 
-echo Downloading Qt6 installer...
-set QT_INSTALLER_URL=https://download.qt.io/official_releases/online_installers/qt-unified-windows-x64-online.exe
-powershell -Command "Invoke-WebRequest -Uri '%QT_INSTALLER_URL%' -OutFile 'qt-installer.exe'"
+echo Installing Qt6 via choco...
+choco install qtcreator -y
+choco install qt6 -y --params="ADD_TO_PATH=1"
+setx QT_DIR "C:\Qt\6.9.0\msvc2022_64" /M
+setx PATH "%PATH%;C:\Qt\6.9.0\msvc2022_64\bin" /M
 
-echo Running Qt6 installer (minimal installation)...
-start /wait qt-installer.exe --script https://gist.githubusercontent.com/username/yourqtinstallscript/raw/script.qs
-del qt-installer.exe
-
-setx QT_DIR "C:\Qt\6.9.0\msvc2019_64" /M
-setx PATH "%PATH%;C:\Qt\6.9.0\msvc2019_64\bin" /M
+setx QT_DIR "C:\Qt\6.9.0\msvc2022_64" /M
+setx PATH "%PATH%;C:\Qt\6.9.0\msvc2022_64\bin" /M
 
 echo Installing SQLite3...
 choco install sqlite --installargs="ADDLOCAL=IncludeFiles,LibraryFiles" -y
