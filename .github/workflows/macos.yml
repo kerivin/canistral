@@ -1,0 +1,31 @@
+name: macOS Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Dependencies
+      run: sh scripts/install_macos.sh
+
+    - name: Configure
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: cmake --build build --parallel $(sysctl -n hw.ncpu)
+
+    - name: Package
+      run: |
+        mkdir -p artifact
+        cp build/Canistral artifact/
+        # Create .app bundle if needed
+        hdiutil create -volname Canistral -srcfolder artifact -ov Canistral-macOS.dmg
+      
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Canistral-macOS
+        path: Canistral-macOS.dmg
