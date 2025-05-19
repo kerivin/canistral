@@ -23,24 +23,31 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 find_package(SQLite3 REQUIRED)
 find_package(LibreOffice REQUIRED)
 
-find_path(SQLite3_INCLUDE_DIR sqlite3.h
-    PATHS
-    /usr/include
-    /usr/local/include
-    "C:/SQLite"
-    "C:/Program Files/SQLite"
-    REQUIRED
-)
+if(WIN32)
+    find_path(SQLite3_INCLUDE_DIR
+        NAMES sqlite3.h
+        PATHS "${SQLite3_DIR}"
+        PATH_SUFFIXES include
+        REQUIRED
+    )
+    
+    find_library(SQLite3_LIBRARY
+        NAMES sqlite3 sqlite3.lib
+        PATHS "${SQLite3_DIR}"
+        PATH_SUFFIXES lib
+        REQUIRED
+    )
 
-find_library(SQLite3_LIBRARY
-    NAMES sqlite3 sqlite3.lib
-    PATHS
-    /usr/lib
-    /usr/local/lib
-    "C:/SQLite"
-    "C:/Program Files/SQLite"
-    REQUIRED
-)
+    if(NOT SQLite3_LIBRARY)
+        # Fallback to DLL if static lib not found
+        find_file(SQLite3_DLL
+            NAMES sqlite3.dll
+            PATHS "${SQLite3_DIR}"
+            REQUIRED
+        )
+        set(SQLite3_LIBRARY ${SQLite3_DLL})
+    endif()
+endif()
 
 message(STATUS "CMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}")
 message(STATUS "LibreOffice: ${LibreOffice_DIR}")
@@ -79,6 +86,9 @@ if(WIN32)
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
         COMMAND ${CMAKE_COMMAND} -E copy
             "$<TARGET_FILE:Qt6::Widgets>"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+        COMMAND ${CMAKE_COMMAND} -E copy
+            "$<TARGET_FILE:SQLite::SQLite3>"
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
     )
 endif()
