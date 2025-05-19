@@ -23,14 +23,12 @@ if(WIN32)
     find_path(SQLite3_INCLUDE_DIR
         NAMES sqlite3.h
         PATHS "${SQLite3_DIR}"
-        PATH_SUFFIXES include
         REQUIRED
     )
     
     find_library(SQLite3_LIBRARY
         NAMES sqlite3 sqlite3.lib
         PATHS "${SQLite3_DIR}"
-        PATH_SUFFIXES lib
         REQUIRED
     )
 
@@ -43,6 +41,12 @@ if(WIN32)
         )
         set(SQLite3_LIBRARY ${SQLite3_DLL})
     endif()
+
+    add_library(SQLite3::SQLite3 UNKNOWN IMPORTED)
+    set_target_properties(SQLite3::SQLite3 PROPERTIES
+        IMPORTED_LOCATION "${SQLite3_LIBRARY}"
+        INTERFACE_INCLUDE_DIRECTORIES "${SQLite3_INCLUDE_DIR}"
+    )
 endif()
 
 # Find dependencies
