@@ -3,14 +3,15 @@ choco install libreoffice-sdk -y --params="/AddToPath"
 setx LibreOffice_DIR "C:\Program Files\LibreOffice\sdk" /M
 
 echo Downloading Qt6 installer...
-powershell -Command "(New-Object System.Net.WebClient).DownloadFile('https://download.qt.io/official_releases/online_installers/qt-unified-windows-x64-online.exe', 'qt-installer.exe')"
+set QT_INSTALLER_URL=https://download.qt.io/official_releases/online_installers/qt-unified-windows-x64-online.exe
+powershell -Command "Invoke-WebRequest -Uri '%QT_INSTALLER_URL%' -OutFile 'qt-installer.exe'"
 
 echo Running Qt6 installer (minimal installation)...
 start /wait qt-installer.exe --script https://gist.githubusercontent.com/username/yourqtinstallscript/raw/script.qs
 del qt-installer.exe
 
-setx QT_DIR "C:\Qt\6.5.0\msvc2019_64" /M
-setx PATH "%PATH%;C:\Qt\6.5.0\msvc2019_64\bin" /M
+setx QT_DIR "C:\Qt\6.9.0\msvc2019_64" /M
+setx PATH "%PATH%;C:\Qt\6.9.0\msvc2019_64\bin" /M
 
 echo Installing SQLite3...
 choco install sqlite --installargs="ADDLOCAL=IncludeFiles,LibraryFiles" -y
