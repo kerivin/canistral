@@ -10,7 +10,6 @@ if(WIN32)
     set(SQLite3_DIR "C:/Program Files/SQLite" CACHE PATH "SQLite3 path" FORCE)
 elseif(APPLE)
     set(LibreOffice_DIR "/usr/local/opt/libreoffice/sdk" CACHE PATH "LibreOffice SDK path" FORCE)
-    execute_process(COMMAND find /Applications/LibreOffice.app -name "libuno_cppuhelper*.dylib")
     set(LibreOffice_INCLUDE_DIRS
         "/Applications/LibreOffice.app/Contents/Resources/include"
     )
