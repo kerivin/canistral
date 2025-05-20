@@ -23,6 +23,13 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/dep-build")
 endif()
 
 set(DEPS_DIR "${CMAKE_BINARY_DIR}/dep-build")
+file(GLOB DEPS_DIR_CONTENT LIST_DIRECTORIES true "${DEPS_DIR}/*")
+file(GLOB QT_DIR_CONTENT LIST_DIRECTORIES true "${DEPS_DIR}/Qt/*")
+file(GLOB LO_DIR_CONTENT LIST_DIRECTORIES true "${DEPS_DIR}/LibreOffice/*")
+
+message(STATUS "Dependencies directory: ${DEPS_DIR_CONTENT}")
+message(STATUS "Qt directory: ${QT_DIR_CONTENT}")
+message(STATUS "LibreOffice directory: ${LO_DIR_CONTENT}")
 
 # Cross-platform Qt6 detection
 if(DEFINED ENV{QT_DIR})
@@ -36,6 +43,10 @@ elseif(WIN32)
         "${DEPS_DIR}/Qt/6.6.0/msvc2019_64"
         "C:/Qt/6.6.0/msvc2019_64"
         "C:/Qt/6.6.0/mingw_64"
+        "C:/Qt/6.6.0/msvc2019_64/lib/cmake/Qt6"
+        "C:/Qt/6.6.0/mingw_64/lib/cmake/Qt6"
+        "C:/Qt/6.6.0/msvc2019_64/lib/cmake"
+        "C:/Qt/6.6.0/mingw_64/lib/cmake"
         DOC "Path to Qt6 installation"
     )
     if(NOT QT_DIR)
