@@ -1,1 +1,0 @@
-brew install qt@6 sqlite libreoffice vulkan-tools cmake

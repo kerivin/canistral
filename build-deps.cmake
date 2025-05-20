@@ -7,9 +7,39 @@ message(STATUS "Building dependencies in: ${DEPS_DIR}")
 # Platform detection
 if(WIN32)
     # Windows - Chocolatey
-    execute_process(COMMAND powershell -ExecutionPolicy Bypass -File
-        "${CMAKE_CURRENT_SOURCE_DIR}/scripts/install_chocolatey.ps1" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    )
+    find_program(CHOCO choco)
+    if(NOT CHOCO)
+        message(STATUS "Installing Chocolatey...")
+    
+        # 1. Download installer
+        file(DOWNLOAD 
+            https://chocolatey.org/install.ps1
+            "${DEPS_DIR}/install-choco.ps1"
+            STATUS download_status
+        )
+        list(GET download_status 0 error_code)
+        if(error_code)
+            message(FATAL_ERROR "Failed to download Chocolatey installer")
+        endif()
+
+        # 2. Run installer with environment refresh
+        execute_process(
+            COMMAND powershell -ExecutionPolicy Bypass -Command 
+                "[System.Environment]::SetEnvironmentVariable('Path', [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path', 'User'), 'Process'); & '${DEPS_DIR}/install-choco.ps1'"
+            RESULT_VARIABLE install_result
+        )
+        if(NOT install_result EQUAL 0)
+            message(FATAL_ERROR "Chocolatey installation failed")
+    endif()
+
+    # 3. Force refresh PATH in current process
+    set(ENV{PATH} "$ENV{ALLUSERSPROFILE}\\chocolatey\\bin;$ENV{PATH}")
+    
+    # 4. Verify installation
+    unset(CHOCO CACHE)  # Clear cached result
+    find_program(CHOCO choco REQUIRED)
+    endif()
+
     find_program(CHOCO choco)
     if(CHOCO)
         execute_process(
