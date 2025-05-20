@@ -3,6 +3,14 @@ project(Canistral LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+if(MSVC)
+    add_compile_options(/Zc:__cplusplus)
+    # target_compile_options(${PROJECT_NAME} PRIVATE /Zc:__cplusplus)
+else()
+    add_compile_options(-Wall -Wextra)
+endif()
 
 # Trigger dependency build before configuration
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/dep-build")
@@ -15,6 +23,19 @@ endif()
 
 set(DEPS_DIR "${CMAKE_BINARY_DIR}/dep-build")
 
+if(WIN32)
+    set(SQLite3_INCLUDE_DIR "${DEPS_DIR}/SQLite/include")
+    set(SQLite3_LIBRARY "${DEPS_DIR}/SQLite/lib/sqlite3.lib")
+else()
+    find_path(SQLite3_INCLUDE_DIR sqlite3.h
+        PATHS "${DEPS_DIR}/SQLite/include"
+            "${DEPS_DIR}/sqlite-amalgamation-3420000"
+    )
+    find_path(LIBREOFFICE_INCLUDE_DIR uno/environment.h
+        PATHS "${DEPS_DIR}/LibreOffice/sdk/include"
+    )
+endif()
+
 # Qt6 Setup
 list(APPEND CMAKE_PREFIX_PATH
     "${DEPS_DIR}/Qt"
@@ -22,21 +43,6 @@ list(APPEND CMAKE_PREFIX_PATH
     "$ENV{HOMEBREW_PREFIX}/opt/qt@6"     # macOS
 )
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
-
-if(WIN32)
-    set(QT_DIR "${DEPS_DIR}/Qt/6.6.0/msvc2019_64")
-    set(SQLite3_INCLUDE_DIR "${DEPS_DIR}/SQLite/include")
-    set(SQLite3_LIBRARY "${DEPS_DIR}/SQLite/lib/sqlite3.lib")
-elseif(APPLE)
-    execute_process(COMMAND brew --prefix qt@6 OUTPUT_VARIABLE QT_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
-    set(QT_DIR "${QT_PREFIX}")
-    set(SQLite3_INCLUDE_DIR "${QT_PREFIX}/include")
-    set(SQLite3_LIBRARY "${QT_PREFIX}/lib/libsqlite3.dylib")
-else()
-    set(QT_DIR "/usr/lib/x86_64-linux-gnu/cmake/Qt6")
-    set(SQLite3_INCLUDE_DIR "/usr/include")
-    set(SQLite3_LIBRARY "/usr/lib/x86_64-linux-gnu/libsqlite3.so")
-endif()
 
 # SQLite3 Setup
 find_library(SQLite3_LIBRARY sqlite3
