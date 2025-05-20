@@ -41,7 +41,7 @@ if(WIN32)
         execute_process(
             COMMAND ${CHOCO} install -y qt6-base-dev --no-progress --params="/InstallationDirectory ${DEPS_DIR}/Qt /DesktopWin64"
             COMMAND ${CHOCO} install -y sqlite --no-progress --params="/InstallationDirectory ${DEPS_DIR}/SQLite"
-            COMMAND ${CHOCO} install -y libreoffice-fresh --params="'/InstallationDirectory ${DEPS_DIR}/LibreOffice /quiet /norestart'"
+            COMMAND ${CHOCO} install -y libreoffice-fresh --no-progress --params="'/InstallationDirectory ${DEPS_DIR}/LibreOffice /quiet /norestart'"
         )
     else()
         message(WARNING "Chocolatey not found - manual dependency installation required")
