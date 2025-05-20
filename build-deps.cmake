@@ -40,7 +40,6 @@ if(WIN32)
     if(CHOCO)
         execute_process(
             COMMAND ${CHOCO} install -y qt6-base-dev --no-progress --params="/InstallationDirectory ${DEPS_DIR}/Qt /DesktopWin64"
-            COMMAND ${CHOCO} install -y sqlite --no-progress --params="/InstallationDirectory ${DEPS_DIR}/SQLite"
             COMMAND ${CHOCO} install -y libreoffice-fresh --no-progress --params="'/InstallationDirectory ${DEPS_DIR}/LibreOffice /quiet /norestart'"
         )
     else()
@@ -52,7 +51,7 @@ elseif(APPLE)
     find_program(BREW brew)
     if(BREW)
         execute_process(
-            COMMAND ${BREW} install qt@6 sqlite libreoffice
+            COMMAND ${BREW} install qt@6 libreoffice
         )
         # Create symlinks in dep-build
         execute_process(
@@ -61,13 +60,6 @@ elseif(APPLE)
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
         file(CREATE_LINK "${DEPS_DIR}/Qt" "${QT6_PREFIX}" SYMBOLIC)
-        
-        execute_process(
-            COMMAND ${BREW} --prefix sqlite
-            OUTPUT_VARIABLE SQLITE_PREFIX
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-        file(CREATE_LINK "${DEPS_DIR}/SQLite" "${SQLITE_PREFIX}" SYMBOLIC)
         
         file(CREATE_LINK "${DEPS_DIR}/LibreOffice" "/Applications/LibreOffice.app/Contents/Resources/sdk" SYMBOLIC)
     else()
@@ -80,14 +72,11 @@ else()
     if(APT)
         execute_process(
             COMMAND sudo ${APT} update
-            COMMAND sudo ${APT} install -y libgl1-mesa-dev qt6-base-dev libsqlite3-dev libreoffice-dev
+            COMMAND sudo ${APT} install -y libgl1-mesa-dev qt6-base-dev libreoffice-dev
         )
         # Create links in dep-build
         file(MAKE_DIRECTORY "${DEPS_DIR}/Qt")
         file(COPY "/usr/lib/qt6/" DESTINATION "${DEPS_DIR}/Qt")
-        
-        file(MAKE_DIRECTORY "${DEPS_DIR}/SQLite")
-        file(COPY "/usr/include/sqlite3.h" DESTINATION "${DEPS_DIR}/SQLite/include")
         
         file(MAKE_DIRECTORY "${DEPS_DIR}/LibreOffice")
         file(COPY "/usr/lib/libreoffice/sdk/" DESTINATION "${DEPS_DIR}/LibreOffice/sdk")
