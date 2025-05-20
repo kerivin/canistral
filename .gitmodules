@@ -1,0 +1,9 @@
+[submodule "third_party/sqlite3"]
+	path = third_party/sqlite3
+	url = https://github.com/SRombauts/SQLiteCpp.git
+[submodule "third_party/qt6"]
+	path = third_party/qt6
+	url = https://github.com/qt/qtbase.git
+[submodule "third_party/libreoffice-sdk"]
+	path = third_party/libreoffice-sdk
+	url = https://github.com/LibreOffice/core.git

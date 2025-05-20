@@ -1,73 +1,107 @@
-cmake_minimum_required(VERSION 3.25)
-project(Canistral LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.21)
+project(Canistral VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+#-----------------------------------------------------------------------------
+# Dependency Paths
+#-----------------------------------------------------------------------------
 
-if(WIN32)
-    message(WARNING "WINDOWS BUILD HASN'T BEEN TESTED")
-    execute_process(COMMAND powershell -ExecutionPolicy Bypass -File "${CMAKE_CURRENT_SOURCE_DIR}/scripts/install_windows.ps1" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-elseif(APPLE)
-    message(WARNING "MACOS BUILD HASN'T BEEN TESTED")
-    execute_process(COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/scripts/install_macos.sh" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+set(SUBMODULES_DIR "${CMAKE_SOURCE_DIR}/third_party")
+set(QT_SUBMODULE_DIR "${SUBMODULES_DIR}/qt6")
+set(SQLITE3_SUBMODULE_DIR "${SUBMODULES_DIR}/sqlite3")
+set(LIBREOFFICE_SDK_SUBMODULE_DIR "${SUBMODULES_DIR}/libreoffice-sdk")
+
+#-----------------------------------------------------------------------------
+# Qt6 (Submodule)
+#-----------------------------------------------------------------------------
+
+if(EXISTS "${QT_SUBMODULE_DIR}")
+    set(CMAKE_PREFIX_PATH "${QT_SUBMODULE_DIR};${CMAKE_PREFIX_PATH}")
+    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+    
+    # Platform-specific Qt deployment
+    if(WIN32)
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${QT_SUBMODULE_DIR}/bin"
+                $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        )
+    endif()
 else()
-    execute_process(COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/scripts/install_linux.sh" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    message(FATAL_ERROR "Qt6 submodule not found. Run: git submodule update --init")
 endif()
 
-# Find dependencies
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
-find_package(SQLite3 REQUIRED)
-find_package(LibreOffice REQUIRED)
+#-----------------------------------------------------------------------------
+# SQLite3 (Submodule)
+#-----------------------------------------------------------------------------
 
-message(STATUS "CMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}")
-message(STATUS "LibreOffice: ${LibreOffice_DIR}")
-message(STATUS "LibreOffice Include: ${LibreOffice_INCLUDE_DIRS}")
-message(STATUS "LibreOffice Library: ${LibreOffice_LIBRARIES}")
-message(STATUS "SQLite3 Include: ${SQLite3_INCLUDE_DIR}")
-message(STATUS "SQLite3 Library: ${SQLite3_LIBRARY}")
+if(EXISTS "${SQLITE3_SUBMODULE_DIR}")
+    # Build SQLite3 from submodule
+    add_library(sqlite3
+        "${SQLITE3_SUBMODULE_DIR}/sqlite3.c"
+        "${SQLITE3_SUBMODULE_DIR}/sqlite3.h"
+    )
+    target_include_directories(sqlite3 PUBLIC "${SQLITE3_SUBMODULE_DIR}")
+else()
+    message(FATAL_ERROR "SQLite3 submodule not found. Run: git submodule update --init")
+endif()
 
-file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
+#-----------------------------------------------------------------------------
+# LibreOffice SDK (Submodule)
+#-----------------------------------------------------------------------------
 
-# Main executable
-add_executable(${PROJECT_NAME}
+if(EXISTS "${LIBREOFFICE_SDK_SUBMODULE_DIR}")
+    add_library(libreoffice-sdk INTERFACE)
+    target_include_directories(libreoffice-sdk INTERFACE
+        "${LIBREOFFICE_SDK_SUBMODULE_DIR}/include"
+    )
+    add_definitions(-DHAS_LIBREOFFICE)
+else()
+    message(WARNING "LibreOffice SDK submodule not found - document conversion disabled")
+endif()
+
+#-----------------------------------------------------------------------------
+# Main Application
+#-----------------------------------------------------------------------------
+
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE HEADERS "include/*.h")
+file(GLOB_RECURSE UI_FILES "ui/*.ui")
+file(GLOB_RECURSE RESOURCES "resources/*.qrc")
+
+qt_add_executable(${PROJECT_NAME}
     ${SOURCES}
-    main.cpp
+    ${HEADERS}
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE
-    include
-    ${SQLite3_INCLUDE_DIRS}
-    ${LibreOffice_INCLUDE_DIRS}
-    ${Qt6_INCLUDE_DIRS}
+qt_add_resources(${PROJECT_NAME} "RESOURCES"
+    ${RESOURCES}
+)
+
+qt_wrap_ui(${PROJECT_NAME} "UI_HEADERS"
+    ${UI_FILES}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Core
+    Qt6::Gui
     Qt6::Widgets
-    SQLite::SQLite3
-    ${LibreOffice_LIBRARIES}
+    sqlite3
 )
 
-# Post-build for Windows (copy Qt DLLs)
-if(WIN32)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "$<TARGET_FILE:Qt6::Core>"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "$<TARGET_FILE:Qt6::Widgets>"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "$<TARGET_FILE:SQLite::SQLite3>"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-    )
+if(TARGET libreoffice-sdk)
+    target_link_libraries(${PROJECT_NAME} PRIVATE libreoffice-sdk)
 endif()
 
-# Install instructions
-install(TARGETS ${PROJECT_NAME} 
+#-----------------------------------------------------------------------------
+# Installation
+#-----------------------------------------------------------------------------
+
+install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION bin
-    BUNDLE DESTINATION Applications  # macOS .app
+    BUNDLE DESTINATION .
+    LIBRARY DESTINATION lib
 )
