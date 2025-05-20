@@ -39,39 +39,10 @@ if(WIN32)
     find_program(CHOCO choco)
     if(CHOCO)
         execute_process(
-            COMMAND ${CHOCO} install -y qt6 --no-progress --params="/InstallationDirectory ${DEPS_DIR}/Qt /DesktopWin64"
+            COMMAND ${CHOCO} install -y qt6-base-dev --no-progress --params="/InstallationDirectory ${DEPS_DIR}/Qt /DesktopWin64"
             COMMAND ${CHOCO} install -y sqlite --no-progress --params="/InstallationDirectory ${DEPS_DIR}/SQLite"
-        )
-
-            execute_process(
             COMMAND ${CHOCO} install -y libreoffice-fresh --params="'/InstallationDirectory ${DEPS_DIR}/LibreOffice /quiet /norestart'"
-            RESULT_VARIABLE lo_result
         )
-        
-        if(NOT lo_result EQUAL 0)
-            set(LIBREOFFICE_PORTABLE_ZIP "${DEPS_DIR}/lo-portable.zip")
-            file(DOWNLOAD 
-                https://download.documentfoundation.org/libreoffice/portable/7.5.2/LibreOfficePortable_7.5.2_Win_x64.zip
-                ${LIBREOFFICE_PORTABLE_ZIP}
-                TLS_VERIFY OFF
-                SHOW_PROGRESS
-                STATUS download_status
-            )
-            file(SIZE ${LIBREOFFICE_PORTABLE_ZIP} zip_size)
-            if(zip_size LESS 1000000)  # ~1MB minimum
-                message(FATAL_ERROR "Downloaded LibreOffice zip is too small (${zip_size} bytes)")
-            else()
-                execute_process(
-                    COMMAND ${CMAKE_COMMAND} -E tar xzf ${LIBREOFFICE_PORTABLE_ZIP}
-                    WORKING_DIRECTORY "${DEPS_DIR}"
-                )
-            endif()
-            set(LIBREOFFICE_DIR "${DEPS_DIR}/LibreOfficePortable")
-        else()
-            set(LIBREOFFICE_DIR "${DEPS_DIR}/LibreOffice")
-        endif()
-
-        set(LIBREOFFICE_SDK_DIR "${LIBREOFFICE_DIR}/sdk")
     else()
         message(WARNING "Chocolatey not found - manual dependency installation required")
     endif()
@@ -109,7 +80,7 @@ else()
     if(APT)
         execute_process(
             COMMAND sudo ${APT} update
-            COMMAND sudo ${APT} install -y qt6-base-dev libsqlite3-dev libreoffice-dev
+            COMMAND sudo ${APT} install -y libgl1-mesa-dev qt6-base-dev libsqlite3-dev libreoffice-dev
         )
         # Create links in dep-build
         file(MAKE_DIRECTORY "${DEPS_DIR}/Qt")
