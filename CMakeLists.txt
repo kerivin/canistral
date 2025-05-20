@@ -32,6 +32,7 @@ elseif(WIN32)
     # Windows: Try multiple possible locations
     find_path(QT_DIR NAMES Qt6Config.cmake
         PATHS
+        "${DEPS_DIR}/Qt"
         "${DEPS_DIR}/Qt/6.6.0/msvc2019_64"
         "C:/Qt/6.6.0/msvc2019_64"
         "C:/Qt/6.6.0/mingw_64"
@@ -42,7 +43,6 @@ elseif(WIN32)
     endif()
 
     list(APPEND CMAKE_PREFIX_PATH
-        "${QT_DIR}"
         "${QT_DIR}/lib/cmake"
         "${QT_DIR}/../../"  # For finding dependencies
     )
