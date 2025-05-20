@@ -19,9 +19,9 @@ else()
 endif()
 
 # Find dependencies
-find_package(Qt6 CONFIG REQUIRED COMPONENTS Core Widgets)
-find_package(SQLite3 CONFIG REQUIRED)
-find_package(LibreOffice CONFIG REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+find_package(SQLite3 REQUIRED)
+find_package(LibreOffice REQUIRED)
 
 message(STATUS "CMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}")
 message(STATUS "LibreOffice: ${LibreOffice_DIR}")
