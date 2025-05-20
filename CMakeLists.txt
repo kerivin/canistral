@@ -1,73 +1,43 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.21)
 project(Canistral LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+# Set dependency paths
+set(DEPS_DIR "${CMAKE_BINARY_DIR}/dep-build")
 
-if(WIN32)
-    message(WARNING "WINDOWS BUILD HASN'T BEEN TESTED")
-    execute_process(COMMAND powershell -ExecutionPolicy Bypass -File "${CMAKE_CURRENT_SOURCE_DIR}/scripts/install_windows.ps1" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-elseif(APPLE)
-    message(WARNING "MACOS BUILD HASN'T BEEN TESTED")
-    execute_process(COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/scripts/install_macos.sh" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-else()
-    execute_process(COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/scripts/install_linux.sh" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-endif()
+# Qt6 setup
+list(APPEND CMAKE_PREFIX_PATH 
+    "${DEPS_DIR}/Qt"
+    "${DEPS_DIR}/Qt/6.6.0/msvc2019_64"  # Windows specific
+)
+find_package(Qt6 REQUIRED COMPONENTS Core)
 
-# Find dependencies
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
-find_package(SQLite3 REQUIRED)
-find_package(LibreOffice REQUIRED)
+# SQLite setup
+find_path(SQLite3_INCLUDE_DIR sqlite3.h
+    PATHS "${DEPS_DIR}/SQLite"
+    "${DEPS_DIR}/SQLite/include"
+)
+find_library(SQLite3_LIBRARY sqlite3
+    PATHS "${DEPS_DIR}/SQLite"
+    "${DEPS_DIR}/SQLite/lib"
+)
 
-message(STATUS "CMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}")
-message(STATUS "LibreOffice: ${LibreOffice_DIR}")
-message(STATUS "LibreOffice Include: ${LibreOffice_INCLUDE_DIRS}")
-message(STATUS "LibreOffice Library: ${LibreOffice_LIBRARIES}")
-message(STATUS "SQLite3 Include: ${SQLite3_INCLUDE_DIR}")
-message(STATUS "SQLite3 Library: ${SQLite3_LIBRARY}")
-
+# Create executable
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
-
-# Main executable
-add_executable(${PROJECT_NAME}
-    ${SOURCES}
-    main.cpp
-)
-
-target_include_directories(${PROJECT_NAME} PRIVATE
-    include
-    ${SQLite3_INCLUDE_DIRS}
-    ${LibreOffice_INCLUDE_DIRS}
-    ${Qt6_INCLUDE_DIRS}
-)
-
-target_link_libraries(${PROJECT_NAME} PRIVATE
+add_executable(${PROJECT_NAME} main.cpp ${SOURCES})
+target_link_libraries(${PROJECT_NAME} PRIVATE 
     Qt6::Core
-    Qt6::Widgets
-    SQLite::SQLite3
-    ${LibreOffice_LIBRARIES}
+    ${SQLite3_LIBRARY}
 )
+target_include_directories(${PROJECT_NAME} PRIVATE ${SQLite3_INCLUDE_DIR})
 
-# Post-build for Windows (copy Qt DLLs)
+# Windows DLL copy
 if(WIN32)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
             "$<TARGET_FILE:Qt6::Core>"
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "$<TARGET_FILE:Qt6::Widgets>"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "$<TARGET_FILE:SQLite::SQLite3>"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
     )
 endif()
-
-# Install instructions
-install(TARGETS ${PROJECT_NAME} 
-    RUNTIME DESTINATION bin
-    BUNDLE DESTINATION Applications  # macOS .app
-)
