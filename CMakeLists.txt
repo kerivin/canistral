@@ -5,68 +5,45 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-#-----------------------------------------------------------------------------
-# Dependency Paths
-#-----------------------------------------------------------------------------
-
+# libraries
 set(SUBMODULES_DIR "${CMAKE_SOURCE_DIR}/third_party")
 set(QT_SUBMODULE_DIR "${SUBMODULES_DIR}/qt6")
-set(SQLITE3_SUBMODULE_DIR "${SUBMODULES_DIR}/sqlite3")
+set(SQLITE_SUBMODULE_DIR "${SUBMODULES_DIR}/sqlite3")
 set(LIBREOFFICE_SDK_SUBMODULE_DIR "${SUBMODULES_DIR}/libreoffice-sdk")
 
-#-----------------------------------------------------------------------------
-# Qt6 (Submodule)
-#-----------------------------------------------------------------------------
+add_subdirectory(${QT_SUBMODULE_DIR})
+add_subdirectory(${SQLITE3_SUBMODULE_DIR})
+add_subdirectory(${LIBREOFFICE_SDK_SUBMODULE_DIR})
 
-if(EXISTS "${QT_SUBMODULE_DIR}")
-    set(CMAKE_PREFIX_PATH "${QT_SUBMODULE_DIR};${CMAKE_PREFIX_PATH}")
-    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
-    
-    # Platform-specific Qt deployment
-    if(WIN32)
+# qt6
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+if(WIN32)
         add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_directory
                 "${QT_SUBMODULE_DIR}/bin"
                 $<TARGET_FILE_DIR:${PROJECT_NAME}>
         )
-    endif()
-else()
-    message(FATAL_ERROR "Qt6 submodule not found. Run: git submodule update --init")
 endif()
 
-#-----------------------------------------------------------------------------
-# SQLite3 (Submodule)
-#-----------------------------------------------------------------------------
+# libreoffice
+add_library(libreoffice-sdk)
+target_include_directories(libreoffice-sdk "${LIBREOFFICE_SDK_SUBMODULE_DIR}/include")
 
-if(EXISTS "${SQLITE3_SUBMODULE_DIR}")
-    # Build SQLite3 from submodule
-    add_library(sqlite3
-        "${SQLITE3_SUBMODULE_DIR}/sqlite3.c"
-        "${SQLITE3_SUBMODULE_DIR}/sqlite3.h"
-    )
-    target_include_directories(sqlite3 PUBLIC "${SQLITE3_SUBMODULE_DIR}")
-else()
-    message(FATAL_ERROR "SQLite3 submodule not found. Run: git submodule update --init")
-endif()
+# sqlite3
+add_library(sqlite3)
+target_include_directories(sqlite3 "${SQLITE3_SUBMODULE_DIR}/include")
 
-#-----------------------------------------------------------------------------
-# LibreOffice SDK (Submodule)
-#-----------------------------------------------------------------------------
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    Qt6::Core
+    Qt6::Gui
+    Qt6::Widgets
+    SQLiteCpp
+    sqlite3
+    pthread
+    dl
+)
 
-if(EXISTS "${LIBREOFFICE_SDK_SUBMODULE_DIR}")
-    add_library(libreoffice-sdk INTERFACE)
-    target_include_directories(libreoffice-sdk INTERFACE
-        "${LIBREOFFICE_SDK_SUBMODULE_DIR}/include"
-    )
-    add_definitions(-DHAS_LIBREOFFICE)
-else()
-    message(WARNING "LibreOffice SDK submodule not found - document conversion disabled")
-endif()
-
-#-----------------------------------------------------------------------------
-# Main Application
-#-----------------------------------------------------------------------------
-
+#sources
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.h")
 file(GLOB_RECURSE UI_FILES "ui/*.ui")
@@ -85,20 +62,9 @@ qt_wrap_ui(${PROJECT_NAME} "UI_HEADERS"
     ${UI_FILES}
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    Qt6::Core
-    Qt6::Gui
-    Qt6::Widgets
-    sqlite3
-)
-
 if(TARGET libreoffice-sdk)
     target_link_libraries(${PROJECT_NAME} PRIVATE libreoffice-sdk)
 endif()
-
-#-----------------------------------------------------------------------------
-# Installation
-#-----------------------------------------------------------------------------
 
 install(TARGETS ${PROJECT_NAME}
     RUNTIME DESTINATION bin

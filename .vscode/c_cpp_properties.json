@@ -4,8 +4,7 @@
             "name": "Windows",
             "includePath": [
                 "${workspaceFolder}/include/**",
-                "${env:QT_PATH}/include/**",
-                "${env:LO_DIR}/include/**"
+                "${workspaceFolder}/third_party/**"
             ],
             "defines": [
                 "UNICODE",
@@ -21,8 +20,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/include/**",
-                "/usr/include/x86_64-linux-gnu/qt6/**",
-                "/usr/lib/libreoffice/sdk/include/**"
+                "${workspaceFolder}/third_party/**"
             ],
             "defines": [
                 "QT_CORE_LIB",
