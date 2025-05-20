@@ -37,6 +37,15 @@ elseif(WIN32)
         "C:/Qt/6.6.0/mingw_64"
         DOC "Path to Qt6 installation"
     )
+    if(NOT QT_DIR)
+        message(FATAL_ERROR "Could not find Qt6 installation directory on Windows")
+    endif()
+
+    list(APPEND CMAKE_PREFIX_PATH
+        "${QT_DIR}"
+        "${QT_DIR}/lib/cmake"
+        "${QT_DIR}/../../"  # For finding dependencies
+    )
 elseif(APPLE)
     # macOS: Use homebrew path
     execute_process(COMMAND brew --prefix qt@6
