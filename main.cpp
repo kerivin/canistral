@@ -1,6 +1,6 @@
 // #include "document_processor.h"
-#include <qt6/QtWidgets/QApplication>
-#include <qt6/QtWidgets/QMainWindow>
+#include <QApplication>
+#include <QMainWindow>
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
