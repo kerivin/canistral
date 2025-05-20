@@ -59,7 +59,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 # Windows-specific setup
 if(WIN32)
-    add_custom_command(TARGET myapp POST_BUILD
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
             "$<TARGET_FILE:Qt6::Core>"
             $<TARGET_FILE_DIR:${PROJECT_NAME}>

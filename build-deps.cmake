@@ -11,7 +11,6 @@ if(WIN32)
     if(NOT CHOCO)
         message(STATUS "Installing Chocolatey...")
     
-        # 1. Download installer
         file(DOWNLOAD 
             https://chocolatey.org/install.ps1
             "${DEPS_DIR}/install-choco.ps1"
@@ -22,7 +21,6 @@ if(WIN32)
             message(FATAL_ERROR "Failed to download Chocolatey installer")
         endif()
 
-        # 2. Run installer with environment refresh
         execute_process(
             COMMAND powershell -ExecutionPolicy Bypass -Command 
                 "[System.Environment]::SetEnvironmentVariable('Path', [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path', 'User'), 'Process'); & '${DEPS_DIR}/install-choco.ps1'"
@@ -32,11 +30,9 @@ if(WIN32)
             message(FATAL_ERROR "Chocolatey installation failed")
     endif()
 
-    # 3. Force refresh PATH in current process
     set(ENV{PATH} "$ENV{ALLUSERSPROFILE}\\chocolatey\\bin;$ENV{PATH}")
     
-    # 4. Verify installation
-    unset(CHOCO CACHE)  # Clear cached result
+    unset(CHOCO CACHE)
     find_program(CHOCO choco REQUIRED)
     endif()
 
@@ -45,8 +41,37 @@ if(WIN32)
         execute_process(
             COMMAND ${CHOCO} install -y qt6 --no-progress --params="/InstallationDirectory ${DEPS_DIR}/Qt /DesktopWin64"
             COMMAND ${CHOCO} install -y sqlite --no-progress --params="/InstallationDirectory ${DEPS_DIR}/SQLite"
-            COMMAND ${CHOCO} install -y libreoffice-fresh --no-progress --params="/InstallationDirectory ${DEPS_DIR}/LibreOffice"
         )
+
+            execute_process(
+            COMMAND ${CHOCO} install -y libreoffice-fresh --params="'/InstallationDirectory ${DEPS_DIR}/LibreOffice /quiet /norestart'"
+            RESULT_VARIABLE lo_result
+        )
+        
+        if(NOT lo_result EQUAL 0)
+            set(LIBREOFFICE_PORTABLE_ZIP "${DEPS_DIR}/lo-portable.zip")
+            file(DOWNLOAD 
+                https://download.documentfoundation.org/libreoffice/portable/7.5.2/LibreOfficePortable_7.5.2_Win_x64.zip
+                ${LIBREOFFICE_PORTABLE_ZIP}
+                TLS_VERIFY OFF
+                SHOW_PROGRESS
+                STATUS download_status
+            )
+            file(SIZE ${LIBREOFFICE_PORTABLE_ZIP} zip_size)
+            if(zip_size LESS 1000000)  # ~1MB minimum
+                message(FATAL_ERROR "Downloaded LibreOffice zip is too small (${zip_size} bytes)")
+            else()
+                execute_process(
+                    COMMAND ${CMAKE_COMMAND} -E tar xzf ${LIBREOFFICE_PORTABLE_ZIP}
+                    WORKING_DIRECTORY "${DEPS_DIR}"
+                )
+            endif()
+            set(LIBREOFFICE_DIR "${DEPS_DIR}/LibreOfficePortable")
+        else()
+            set(LIBREOFFICE_DIR "${DEPS_DIR}/LibreOffice")
+        endif()
+
+        set(LIBREOFFICE_SDK_DIR "${LIBREOFFICE_DIR}/sdk")
     else()
         message(WARNING "Chocolatey not found - manual dependency installation required")
     endif()

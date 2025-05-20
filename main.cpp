@@ -1,16 +1,33 @@
-#include <QCoreApplication>
+#include <QApplication>
 #include <QMainWindow>
 #include <sqlite3.h>
 
+#ifdef HAS_LIBREOFFICE
+#include <uno/environment.h>
+#endif
+
 int main(int argc, char *argv[]) {
-    QCoreApplication app(argc, argv);
-    QMainWindow window;
-    window.setWindowTitle("Canistral");
+    // Must create QApplication first
+    QApplication app(argc, argv);
+    
+    // Then create widgets
+    QMainWindow mainWindow;
+    mainWindow.setWindowTitle("Canistral");
+    mainWindow.resize(800, 600);
+    mainWindow.show();
 
+    // SQLite example
     sqlite3 *db;
-    sqlite3_open(":memory:", &db);
-    sqlite3_close(db);
+    if(sqlite3_open(":memory:", &db) == SQLITE_OK) {
+        sqlite3_close(db);
+    }
 
-    window.show();
-    return 0;
+    #ifdef HAS_LIBREOFFICE
+    // LibreOffice initialization
+    uno_Environment *env;
+    uno_initEnvironment(&env);
+    #endif
+
+    // Start event loop
+    return app.exec();
 }
