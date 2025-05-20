@@ -8,9 +8,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Dependencies
-      run: sh scripts/install_linux.sh
-
     - name: Configure
       run: cmake -B build -DCMAKE_BUILD_TYPE=Release -GNinja
 
@@ -34,9 +31,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Dependencies
-      run: sh scripts/install_macos.sh
-
     - name: Configure
       run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
@@ -59,9 +53,6 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
-
-    - name: Install Dependencies
-      run: scripts/install_windows.bat
 
     - name: Configure
       run: cmake -B build -DCMAKE_BUILD_TYPE=Release
