@@ -4,7 +4,7 @@
             "name": "Windows",
             "includePath": [
                 "${workspaceFolder}/include/**",
-                "${workspaceFolder}/third_party/**"
+                "${workspaceFolder}/build/dep-build/**"
             ],
             "defines": [
                 "UNICODE",
@@ -20,7 +20,9 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/include/**",
-                "${workspaceFolder}/third_party/**"
+                "${workspaceFolder}/build/dep-build/LibreOffice/sdk/include/**",
+                "${workspaceFolder}/build/dep-build/Qt/**",
+                "${workspaceFolder}/build/dep-build/SQLite/include/**"
             ],
             "defines": [
                 "QT_CORE_LIB",
