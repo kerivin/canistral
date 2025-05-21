@@ -13,6 +13,14 @@ endif()
 
 enable_language(C)
 
+if(WIN32)
+    # Hide console window (GUI application)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        WIN32_EXECUTABLE TRUE
+        LINK_FLAGS "/ENTRY:mainCRTStartup"
+    )
+endif()
+
 #-----------------------------------------------------------------------------
 # Qt6 Installation and Configuration
 #-----------------------------------------------------------------------------
