@@ -118,8 +118,8 @@ add_executable(${PROJECT_NAME}
     ${HEADERS}
 )
 
-foreach(QT_COMPONENT IN LISTS QT_COMPONENTS)
-    list(APPEND QT_LIBRARIES "Qt6::${QT_COMPONENT}")
+foreach(component IN LISTS QT_COMPONENTS)
+    list(APPEND QT_LIBRARIES "Qt6::${component}")
 endforeach()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
@@ -128,20 +128,18 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 )
 
 if(WIN32)
-    get_target_property(Qt6Core_location Qt6::Core IMPORTED_LOCATION_RELEASE)
-    if(Qt6Core_location)
-        get_filename_component(QT_BIN_DIR ${Qt6Core_location} DIRECTORY)
-        foreach(QT_COMPONENT IN LISTS QT_COMPONENTS)
-            set(COPY_DLL_COMMAND
-                "COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                \"${QT_BIN_DIR}/Qt6${QT_COMPONENT}.dll\"
-                \"$<TARGET_FILE_DIR:${PROJECT_NAME}>\"")
-            list(APPEND COPY_DLL_COMMANDS ${COPY_DLL_COMMAND})
-        endforeach()
-        
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            ${COPY_DLL_COMMANDS}
-            COMMENT "Copying Qt6 DLLs to output directory"
-        )
-    endif()
+    foreach(component IN LISTS QT_COMPONENTS)
+        if(TARGET Qt6::${component})
+            get_target_property(dll_location Qt6::${component} IMPORTED_LOCATION_RELEASE)
+            if(dll_location)
+                get_filename_component(dll_dir ${dll_location} DIRECTORY)
+                add_custom_command(TARGET ${target} POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "${dll_dir}/Qt6${component}.dll"
+                        $<TARGET_FILE_DIR:${target}>
+                    COMMENT "Copying Qt6::${component} DLL"
+                )
+            endif()
+        endif()
+    endforeach()
 endif()
