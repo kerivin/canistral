@@ -64,6 +64,11 @@ if(NOT Qt6_FOUND OR QT_FORCE_INSTALL)
             "C:/Qt/6.6.0/msvc2019_64/lib/cmake/Qt6"
             "C:/Qt/6.5.3/msvc2019_64/lib/cmake/Qt6"
             "C:/Qt/Tools/QtCreator/lib/cmake/Qt6"
+            "C:/Qt/6.6.3/msvc2019_64"
+            "C:/Qt/6.6.0/msvc2019_64"
+            "C:/Qt/6.5.3/msvc2019_64"
+            "C:/Qt/Tools/QtCreator"
+            "$ENV{QT_DIR}"
         )
         
         find_path(QT_DIR 
