@@ -154,13 +154,13 @@ if(WIN32)
             endif()
         endforeach()
 
-        set(QT_PLUGINS_DIR "${QT_BIN_DIR}/../plugins")
-        if(EXISTS "${QT_PLUGINS_DIR}/platforms/qwindows.dll")
+        set(QT_PLATFORMS_DIR "${QT_BIN_DIR}/platforms")
+        if(EXISTS "${QT_PLATFORMS_DIR}/qwindows.dll")
             add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E make_directory
                     "$<TARGET_FILE_DIR:${PROJECT_NAME}>/platforms"
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    "${QT_PLUGINS_DIR}/platforms/qwindows.dll"
+                    "${QT_PLATFORMS_DIR}/qwindows.dll"
                     "$<TARGET_FILE_DIR:${PROJECT_NAME}>/platforms/"
                 COMMENT "Copying Qt platform plugin"
             )
