@@ -27,18 +27,12 @@ find_package(Qt6 QUIET COMPONENTS Core Gui Widgets)
 
 if(NOT Qt6_FOUND OR QT_FORCE_INSTALL)
     message(STATUS "Qt6 not found - installing...")
-    
     if(WIN32)
-        # Windows - use Chocolatey
+        # Windows - chocolatey
         find_program(CHOCO choco.exe)
         if(NOT CHOCO)
             message(STATUS "Installing Chocolatey...")
-        
-            file(DOWNLOAD 
-                https://chocolatey.org/install.ps1
-                "${DEPS_DIR}/install-choco.ps1"
-                STATUS download_status
-            )
+            file(DOWNLOAD https://chocolatey.org/install.ps1 "${CMAKE_BINARY_DIR}/install-choco.ps1" STATUS download_status)
             list(GET download_status 0 error_code)
             if(error_code)
                 message(FATAL_ERROR "Failed to download Chocolatey installer")
@@ -47,66 +41,41 @@ if(NOT Qt6_FOUND OR QT_FORCE_INSTALL)
             execute_process(
                 COMMAND powershell -ExecutionPolicy Bypass -Command 
                     "[System.Environment]::SetEnvironmentVariable('Path', [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path', 'User'), 'Process'); & '${DEPS_DIR}/install-choco.ps1'"
-                RESULT_VARIABLE install_result
             )
-            if(NOT install_result EQUAL 0)
-                message(FATAL_ERROR "Chocolatey installation failed")
-            endif()
-
             set(ENV{PATH} "$ENV{ALLUSERSPROFILE}\\chocolatey\\bin;$ENV{PATH}")
-            
             unset(CHOCO CACHE)
             find_program(CHOCO choco REQUIRED)
         endif()
-
         find_program(CHOCO choco)
         if(NOT CHOCO)
             message(FATAL_ERROR "Chocolatey not found - required for Qt6 installation")
         endif()
-        
-        execute_process(
-            COMMAND choco install qtcreator -y --params="/InstallationPath C:/Qt"
-            RESULT_VARIABLE QT_INSTALL_RESULT
-        )
+        execute_process(COMMAND choco install qtcreator -y --no-progress --params="/InstallationPath C:/Qt")
         set(QT_DIR "C:/Qt/6.6.0/msvc2019_64/lib/cmake/Qt6")
     elseif(APPLE)
-        # macOS - use Homebrew
+        # macOS - brew
         find_program(BREW brew)
         if(NOT BREW)
-            message(FATAL_ERROR "Homebrew not found - required for Qt6 installation")
+            message(FATAL_ERROR "brew is required for dependency installation")
         endif()
-        
-        execute_process(
-            COMMAND ${BREW} install qt@6
-            RESULT_VARIABLE QT_INSTALL_RESULT
-        )
+        execute_process(COMMAND ${BREW} install qt@6 RESULT_VARIABLE QT_INSTALL_RESULT)
         execute_process(
             COMMAND ${BREW} --prefix qt@6
             OUTPUT_VARIABLE QT_PREFIX
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
         set(QT_DIR "${QT_PREFIX}/lib/cmake/Qt6")
-        
     else()
-        # Linux - use system package manager
+        # Linux - apt-get
         find_program(APT_GET apt-get)
-        
-        if(APT_GET)
-            execute_process(
-                COMMAND sudo ${APT_GET} install -y qt6-base-dev qt6-tools-dev-tools
-                RESULT_VARIABLE QT_INSTALL_RESULT
-            )
-        else()
-            message(FATAL_ERROR "No supported package manager found")
+        if(NOT BREW)
+            message(FATAL_ERROR "apt-get is required for dependency installation")
         endif()
-        
+
+        execute_process(COMMAND sudo ${APT_GET} update)
+        execute_process(COMMAND sudo ${APT_GET} install -y libgl1-mesa-dev qt6-base-dev qt6-tools-dev-tools)
         set(QT_DIR "/usr/lib/x86_64-linux-gnu/cmake/Qt6")
     endif()
-    
-    if(NOT QT_INSTALL_RESULT EQUAL 0)
-        message(FATAL_ERROR "Qt6 installation failed")
-    endif()
-    
     list(APPEND CMAKE_PREFIX_PATH ${QT_DIR})
     find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 endif()
