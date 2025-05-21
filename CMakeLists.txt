@@ -5,111 +5,116 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Platform-specific compiler settings
 if(MSVC)
-    add_compile_options(/Zc:__cplusplus)
+    add_compile_options(/Zc:__cplusplus /permissive- /W3)
 else()
-    add_compile_options(-Wall -Wextra)
+    add_compile_options(-Wall -Wextra -fPIC)
 endif()
 
 enable_language(C)
 
-# Dependency handling
-if(NOT EXISTS "${CMAKE_BINARY_DIR}/dep-build")
-    message(STATUS "Building dependencies...")
-    execute_process(
-        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/build-deps.cmake
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    )
+#-----------------------------------------------------------------------------
+# Qt6 Installation and Configuration
+#-----------------------------------------------------------------------------
+
+if(NOT DEFINED QT_FORCE_INSTALL)
+    set(QT_FORCE_INSTALL OFF CACHE BOOL "Force Qt6 installation even if found")
 endif()
 
-set(DEPS_DIR "${CMAKE_BINARY_DIR}/dep-build")
-file(GLOB DEPS_DIR_CONTENT LIST_DIRECTORIES true "${DEPS_DIR}/*")
-file(GLOB QT_DIR_CONTENT LIST_DIRECTORIES true "${DEPS_DIR}/Qt/*")
-file(GLOB LO_DIR_CONTENT LIST_DIRECTORIES true "${DEPS_DIR}/LibreOffice/*")
+# Try to find existing Qt6 installation first
+find_package(Qt6 QUIET COMPONENTS Core Gui Widgets)
 
-message(STATUS "Dependencies directory: ${DEPS_DIR_CONTENT}")
-message(STATUS "Qt directory: ${QT_DIR_CONTENT}")
-message(STATUS "LibreOffice directory: ${LO_DIR_CONTENT}")
+if(NOT Qt6_FOUND OR QT_FORCE_INSTALL)
+    message(STATUS "Qt6 not found - installing...")
+    
+    if(WIN32)
+        # Windows - use Chocolatey
+        find_program(CHOCO choco.exe)
+        if(NOT CHOCO)
+            message(STATUS "Installing Chocolatey...")
+        
+            file(DOWNLOAD 
+                https://chocolatey.org/install.ps1
+                "${DEPS_DIR}/install-choco.ps1"
+                STATUS download_status
+            )
+            list(GET download_status 0 error_code)
+            if(error_code)
+                message(FATAL_ERROR "Failed to download Chocolatey installer")
+            endif()
 
-# Cross-platform Qt6 detection
-if(DEFINED ENV{QT_DIR})
-    # Allow manual override via environment variable
-    set(QT_DIR $ENV{QT_DIR})
-elseif(WIN32)
-    # Windows: Try multiple possible locations
-    find_path(QT_DIR NAMES Qt6Config.cmake
-        PATHS
-        "${DEPS_DIR}/Qt"
-        "${DEPS_DIR}/Qt/6.6.0/msvc2019_64"
-        "C:/Qt/6.6.0/msvc2019_64"
-        "C:/Qt/6.6.0/mingw_64"
-        "C:/Qt/6.6.0/msvc2019_64/lib/cmake/Qt6"
-        "C:/Qt/6.6.0/mingw_64/lib/cmake/Qt6"
-        "C:/Qt/6.6.0/msvc2019_64/lib/cmake"
-        "C:/Qt/6.6.0/mingw_64/lib/cmake"
-        DOC "Path to Qt6 installation"
-    )
-    if(NOT QT_DIR)
-        message(FATAL_ERROR "Could not find Qt6 installation directory on Windows")
-    endif()
+            execute_process(
+                COMMAND powershell -ExecutionPolicy Bypass -Command 
+                    "[System.Environment]::SetEnvironmentVariable('Path', [System.Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path', 'User'), 'Process'); & '${DEPS_DIR}/install-choco.ps1'"
+                RESULT_VARIABLE install_result
+            )
+            if(NOT install_result EQUAL 0)
+                message(FATAL_ERROR "Chocolatey installation failed")
+            endif()
 
-    list(APPEND CMAKE_PREFIX_PATH
-        "${QT_DIR}/lib/cmake"
-        "${QT_DIR}/../../"  # For finding dependencies
-    )
-elseif(APPLE)
-    # macOS: Use homebrew path
-    execute_process(COMMAND brew --prefix qt@6
-        OUTPUT_VARIABLE QT_PREFIX
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_QUIET
-    )
-    if(QT_PREFIX)
-        set(QT_DIR "${QT_PREFIX}")
+            set(ENV{PATH} "$ENV{ALLUSERSPROFILE}\\chocolatey\\bin;$ENV{PATH}")
+            
+            unset(CHOCO CACHE)
+            find_program(CHOCO choco REQUIRED)
+        endif()
+
+        find_program(CHOCO choco)
+        if(NOT CHOCO)
+            message(FATAL_ERROR "Chocolatey not found - required for Qt6 installation")
+        endif()
+        
+        execute_process(
+            COMMAND choco install qtcreator -y --params="/InstallationPath C:/Qt"
+            RESULT_VARIABLE QT_INSTALL_RESULT
+        )
+        set(QT_DIR "C:/Qt/6.6.0/msvc2019_64/lib/cmake/Qt6")
+    elseif(APPLE)
+        # macOS - use Homebrew
+        find_program(BREW brew)
+        if(NOT BREW)
+            message(FATAL_ERROR "Homebrew not found - required for Qt6 installation")
+        endif()
+        
+        execute_process(
+            COMMAND ${BREW} install qt@6
+            RESULT_VARIABLE QT_INSTALL_RESULT
+        )
+        execute_process(
+            COMMAND ${BREW} --prefix qt@6
+            OUTPUT_VARIABLE QT_PREFIX
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        set(QT_DIR "${QT_PREFIX}/lib/cmake/Qt6")
+        
     else()
-        # Fallback to standard locations
-        set(QT_DIR "/usr/local/opt/qt@6")
+        # Linux - use system package manager
+        find_program(APT_GET apt-get)
+        
+        if(APT_GET)
+            execute_process(
+                COMMAND sudo ${APT_GET} install -y qt6-base-dev qt6-tools-dev-tools
+                RESULT_VARIABLE QT_INSTALL_RESULT
+            )
+        else()
+            message(FATAL_ERROR "No supported package manager found")
+        endif()
+        
+        set(QT_DIR "/usr/lib/x86_64-linux-gnu/cmake/Qt6")
     endif()
-else()
-    # Linux: Standard system paths
-    find_path(QT_DIR NAMES Qt6Config.cmake
-        PATHS
-        "/usr/lib/x86_64-linux-gnu/cmake/Qt6"
-        "/usr/local/lib/cmake/Qt6"
-        DOC "Path to Qt6 installation"
-    )
+    
+    if(NOT QT_INSTALL_RESULT EQUAL 0)
+        message(FATAL_ERROR "Qt6 installation failed")
+    endif()
+    
+    list(APPEND CMAKE_PREFIX_PATH ${QT_DIR})
+    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 endif()
 
-# LibreOffice SDK detection
-if(WIN32)
-    set(LO_SDK_PATHS
-        "${DEPS_DIR}/LibreOffice/sdk/include"
-        "C:/LibreOffice/sdk/include"
-    )
-elseif(APPLE)
-    set(LO_SDK_PATHS
-        "${DEPS_DIR}/LibreOffice/sdk/include"
-        "/Applications/LibreOffice.app/Contents/sdk/include"
-        "/opt/libreoffice/sdk/include"
-    )
-else()
-    set(LO_SDK_PATHS
-        "${DEPS_DIR}/LibreOffice/sdk/include"
-        "/usr/include/libreoffice/sdk"
-        "/usr/lib/libreoffice/sdk/include"
-    )
-endif()
+#-----------------------------------------------------------------------------
+# SQLite3 Build
+#-----------------------------------------------------------------------------
 
-find_path(LIBREOFFICE_INCLUDE_DIR uno/environment.h
-    PATHS ${LO_SDK_PATHS}
-    DOC "Path to LibreOffice SDK includes"
-)
-
-# Qt6 Setup
-list(APPEND CMAKE_PREFIX_PATH ${QT_DIR})
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
-
-# SQLite3 Setup
 set(SQLite3_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rd/sqlite3")
 set(SQLite3_INCLUDE_DIR ${SQLite3_DIR})
 set(SQLite3_LIBRARY sqlite3)
@@ -117,41 +122,71 @@ add_library(${SQLite3_LIBRARY} STATIC ${SQLite3_DIR}/sqlite3.c ${SQLite3_INCLUDE
 set_target_properties(${SQLite3_LIBRARY} PROPERTIES LINKER_LANGUAGE C)
 target_include_directories(${SQLite3_LIBRARY} PUBLIC ${SQLite3_INCLUDE_DIR})
 
-# LibreOffice SDK Setup
-if(LIBREOFFICE_INCLUDE_DIR)
-    add_library(LibreOffice::SDK INTERFACE IMPORTED)
-    set_target_properties(LibreOffice::SDK PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${LIBREOFFICE_INCLUDE_DIR}"
-    )
-endif()
+#-----------------------------------------------------------------------------
+# Application Setup
+#-----------------------------------------------------------------------------
 
-# Main executable
-file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
-add_executable(${PROJECT_NAME} main.cpp ${SOURCES})
+file(GLOB_RECURSE SOURCES "src/*.cpp")
+file(GLOB_RECURSE HEADERS "include/*.h")
+
+# Create executable
+add_executable(${PROJECT_NAME}
+    main.cpp
+    ${SOURCES}
+    ${HEADERS}
+)
+
+# Link Qt6 modules
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt6::Core
     Qt6::Gui
     Qt6::Widgets
     ${SQLite3_LIBRARY}
-    $<$<BOOL:${LIBREOFFICE_INCLUDE_DIR}>:LibreOffice::SDK>
 )
 
-# Windows-specific setup
+# Platform-specific post-build steps
 if(WIN32)
-    # Get the directory containing Qt DLLs
-    get_target_property(Qt6Core_location Qt6::Core IMPORTED_LOCATION_RELEASE)
-    get_filename_component(QT_DLL_DIR ${Qt6Core_location} DIRECTORY)
-
+    # Copy Qt DLLs to output directory
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "${QT_DLL_DIR}/Qt6Core.dll"
-            $<TARGET_FILE_DIR:${PROJECT_NAME}>
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "${QT_DLL_DIR}/Qt6Gui.dll"
-            $<TARGET_FILE_DIR:${PROJECT_NAME}>
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "${QT_DLL_DIR}/Qt6Widgets.dll"
-            $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:Qt6::Core>"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:Qt6::Gui>"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "$<TARGET_FILE:Qt6::Widgets>"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
         COMMENT "Copying Qt6 DLLs to output directory"
     )
+    
+    # Set Windows executable icon (optional)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets/icon.ico")
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+            WIN32_EXECUTABLE TRUE
+            MACOSX_BUNDLE_ICON_FILE icon.ico
+        )
+    endif()
+    
+elseif(APPLE)
+    # macOS bundle configuration
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
+    )
+    
+    # Copy Qt frameworks (if using bundle)
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        install(CODE "
+            include(BundleUtilities)
+            fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/MacOS/${PROJECT_NAME}\" \"\" \"\")
+        ")
+    endif()
 endif()
+
+# Installation
+install(TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION bin
+    BUNDLE DESTINATION .
+    LIBRARY DESTINATION lib
+)
