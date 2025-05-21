@@ -60,6 +60,11 @@ jobs:
     - name: Build
       run: cmake --build build --config Release --parallel 4
 
+    - name: Build Directory
+      run: |
+        cd build
+        dir /A-D /S /B
+
     - name: Package
       run: |
         mkdir artifact
