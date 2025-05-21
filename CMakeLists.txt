@@ -13,14 +13,6 @@ endif()
 
 enable_language(C)
 
-if(WIN32)
-    # Hide console window (GUI application)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-        WIN32_EXECUTABLE TRUE
-        LINK_FLAGS "/ENTRY:mainCRTStartup"
-    )
-endif()
-
 #-----------------------------------------------------------------------------
 # Qt6 Installation and Configuration
 #-----------------------------------------------------------------------------
@@ -134,6 +126,11 @@ foreach(component IN LISTS QT_COMPONENTS)
 endforeach()
 
 if(WIN32)
+    # Hide console window (GUI application)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        WIN32_EXECUTABLE TRUE
+        LINK_FLAGS "/ENTRY:mainCRTStartup"
+    )
     get_target_property(Qt6_core_location Qt6::Core IMPORTED_LOCATION_RELEASE)
     if(NOT Qt6_core_location)
         get_target_property(Qt6_core_location Qt6::Core IMPORTED_LOCATION)
