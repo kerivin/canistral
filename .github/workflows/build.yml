@@ -94,9 +94,11 @@ jobs:
     - name: Package
       run: |
         mkdir artifact
-        copy "build\Canistral.exe" artifact/
-        copy "build\*.dll" artifact/
-        7z a "Canistral-Windows.zip" artifact/*
+        copy "build\Canistral.exe" artifact\
+        copy "build\*.dll" artifact\
+        mkdir artifact\platforms
+        copy "build\platforms\*.dll" artifact\platforms
+        7z a "Canistral-Windows.zip" artifact\*
       
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
