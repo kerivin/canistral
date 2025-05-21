@@ -44,7 +44,7 @@ if(NOT Qt6_FOUND OR QT_FORCE_INSTALL)
         if(NOT CHOCO)
             message(FATAL_ERROR "Chocolatey not found - required for Qt6 installation")
         endif()
-        execute_process(COMMAND choco install qt6 -y --version 6.6.0 --no-progress --params="/InstallationPath C:/Qt")
+        execute_process(COMMAND choco install qt6-base-dev -y --no-progress --params="/InstallationPath C:/Qt")
         execute_process(COMMAND choco install cmake qtcreator --no-progress)
         set(QT_PATHS 
             "C:/Qt/6.6.3/msvc2019_64/lib/cmake/Qt6"
