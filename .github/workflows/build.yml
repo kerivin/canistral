@@ -63,8 +63,8 @@ jobs:
     - name: Package
       run: |
         mkdir artifact
-        copy "build\Release\Canistral.exe" artifact/
-        copy "build\Release\*.dll" artifact/
+        copy "build\Canistral.exe" artifact/
+        copy "build\*.dll" artifact/
         7z a "Canistral-Windows.zip" artifact/*
       
     - name: Upload Artifact
