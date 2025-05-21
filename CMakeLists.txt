@@ -48,6 +48,8 @@ if(NOT Qt6_FOUND OR QT_FORCE_INSTALL)
         set(QT_PATHS 
             "C:/Qt/6.4.2/msvc2019_64/lib/cmake/Qt6"
             "C:/Qt/6.4.2/msvc2019_64"
+            "C:/Qt/6.4.2/mingw_64/lib/cmake/Qt6"
+            "C:/Qt/6.4.2/mingw_64"
             "$ENV{QT_DIR}"
             "$ENV{QTDIR}"
         )
