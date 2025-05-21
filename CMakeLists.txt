@@ -114,7 +114,7 @@ target_include_directories(${SQLite3_LIBRARY} PUBLIC ${SQLite3_INCLUDE_DIR})
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.h")
 
-add_executable(${PROJECT_NAME}
+add_executable(${PROJECT_NAME} WIN32
     main.cpp
     ${SOURCES}
     ${HEADERS}
@@ -126,11 +126,6 @@ foreach(component IN LISTS QT_COMPONENTS)
 endforeach()
 
 if(WIN32)
-    # Hide console window (GUI application)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-        WIN32_EXECUTABLE TRUE
-        LINK_FLAGS "/ENTRY:mainCRTStartup"
-    )
     get_target_property(Qt6_core_location Qt6::Core IMPORTED_LOCATION_RELEASE)
     if(NOT Qt6_core_location)
         get_target_property(Qt6_core_location Qt6::Core IMPORTED_LOCATION)
