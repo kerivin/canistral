@@ -73,8 +73,13 @@ jobs:
       shell: pwsh
       run: |
         Get-ChildItem -Path build -Recurse | ForEach-Object {
-          $indent = ' ' * 4 * ($_.FullName.Split('\').Count - 1)
-          "$indent$($_.Name)"
+          $depth = $_.FullName.Split('\').Count - $PWD.Path.Split('\').Count - 1
+          $indent = '    ' * $depth
+          if ($_.PSIsContainer) {
+              "$indent├── [$($_.Name)]"  # Directory marker
+          } else {
+              "$indent├── $($_.Name)"    # File
+          }
         }
 
     - name: Package
