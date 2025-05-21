@@ -72,15 +72,24 @@ jobs:
       continue-on-error: true
       shell: pwsh
       run: |
-        Get-ChildItem -Path build -Recurse | ForEach-Object {
-          $depth = $_.FullName.Split('\').Count - $PWD.Path.Split('\').Count - 1
-          $indent = '    ' * $depth
-          if ($_.PSIsContainer) {
-              "$indent├── [$($_.Name)]"  # Directory marker
-          } else {
-              "$indent├── $($_.Name)"    # File
-          }
+        function Show-Tree {
+            param ($Path = ".", $Indent = "")
+            $items = Get-ChildItem -Path $Path
+            $count = $items.Count
+            $i = 0
+            foreach ($item in $items) {
+                $i++
+                $prefix = if ($i -eq $count) { "└── " } else { "├── " }
+                $nextIndent = if ($i -eq $count) { $Indent + "    " } else { $Indent + "│   " }
+                if ($item.PSIsContainer) {
+                    Write-Output "$Indent$prefix[$($item.Name)]"
+                    Show-Tree -Path $item.FullName -Indent $nextIndent
+                } else {
+                    Write-Output "$Indent$prefix$($item.Name)"
+                }
+            }
         }
+        Show-Tree -Path "build"
 
     - name: Package
       run: |
