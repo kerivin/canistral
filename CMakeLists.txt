@@ -51,7 +51,7 @@ if(NOT Qt6_FOUND OR QT_FORCE_INSTALL)
             message(FATAL_ERROR "Chocolatey not found - required for Qt6 installation")
         endif()
         execute_process(COMMAND choco install qtcreator -y --no-progress --params="/InstallationPath C:/Qt")
-        set(QT_DIR "C:/Qt/6.6.0/msvc2019_64/lib/cmake/Qt6")
+        set(Qt6_DIR "C:/Qt/6.6.0/msvc2019_64/lib/cmake/Qt6")
     elseif(APPLE)
         # macOS - brew
         find_program(BREW brew)
@@ -64,19 +64,19 @@ if(NOT Qt6_FOUND OR QT_FORCE_INSTALL)
             OUTPUT_VARIABLE QT_PREFIX
             OUTPUT_STRIP_TRAILING_WHITESPACE
         )
-        set(QT_DIR "${QT_PREFIX}/lib/cmake/Qt6")
+        set(Qt6_DIR "${QT_PREFIX}/lib/cmake/Qt6")
     else()
         # Linux - apt-get
         find_program(APT_GET apt-get)
-        if(NOT BREW)
+        if(NOT APT_GET)
             message(FATAL_ERROR "apt-get is required for dependency installation")
         endif()
 
         execute_process(COMMAND sudo ${APT_GET} update)
         execute_process(COMMAND sudo ${APT_GET} install -y libgl1-mesa-dev qt6-base-dev qt6-tools-dev-tools)
-        set(QT_DIR "/usr/lib/x86_64-linux-gnu/cmake/Qt6")
+        set(Qt6_DIR "/usr/lib/x86_64-linux-gnu/cmake/Qt6")
     endif()
-    list(APPEND CMAKE_PREFIX_PATH ${QT_DIR})
+    list(APPEND CMAKE_PREFIX_PATH ${Qt6_DIR})
     find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
 endif()
 
@@ -113,7 +113,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${SQLite3_LIBRARY}
 )
 
-# Platform-specific post-build steps
 if(WIN32)
     # Copy Qt DLLs to output directory
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
@@ -128,34 +127,4 @@ if(WIN32)
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
         COMMENT "Copying Qt6 DLLs to output directory"
     )
-    
-    # Set Windows executable icon (optional)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets/icon.ico")
-        set_target_properties(${PROJECT_NAME} PROPERTIES
-            WIN32_EXECUTABLE TRUE
-            MACOSX_BUNDLE_ICON_FILE icon.ico
-        )
-    endif()
-    
-elseif(APPLE)
-    # macOS bundle configuration
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-        MACOSX_BUNDLE TRUE
-        MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME}
-    )
-    
-    # Copy Qt frameworks (if using bundle)
-    if(CMAKE_BUILD_TYPE STREQUAL "Release")
-        install(CODE "
-            include(BundleUtilities)
-            fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/MacOS/${PROJECT_NAME}\" \"\" \"\")
-        ")
-    endif()
 endif()
-
-# Installation
-install(TARGETS ${PROJECT_NAME}
-    RUNTIME DESTINATION bin
-    BUNDLE DESTINATION .
-    LIBRARY DESTINATION lib
-)
