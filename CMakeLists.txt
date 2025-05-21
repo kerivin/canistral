@@ -21,7 +21,13 @@ if(NOT DEFINED QT_FORCE_INSTALL)
     set(QT_FORCE_INSTALL OFF CACHE BOOL "Force Qt6 installation even if found")
 endif()
 
-find_package(Qt6 QUIET COMPONENTS Core Gui Widgets)
+set(QT_COMPONENTS
+    Core
+    Gui
+    Widgets
+)
+
+find_package(Qt6 QUIET COMPONENTS ${QT_COMPONENTS})
 
 if(NOT Qt6_FOUND OR QT_FORCE_INSTALL)
     message(STATUS "Qt6 not found - installing...")
@@ -85,7 +91,7 @@ if(NOT Qt6_FOUND OR QT_FORCE_INSTALL)
         set(QT_DIR "/usr/lib/x86_64-linux-gnu/cmake/Qt6")
     endif()
     list(APPEND CMAKE_PREFIX_PATH ${QT_DIR})
-    find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+    find_package(Qt6 REQUIRED COMPONENTS ${QT_COMPONENTS})
 endif()
 
 #-----------------------------------------------------------------------------
@@ -112,24 +118,30 @@ add_executable(${PROJECT_NAME}
     ${HEADERS}
 )
 
+foreach(QT_COMPONENT IN LISTS QT_COMPONENTS)
+    list(APPEND QT_LIBRARIES "Qt6::${QT_COMPONENT}")
+endforeach()
+
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    Qt6::Core
-    Qt6::Gui
-    Qt6::Widgets
+    ${QT_LIBRARIES}
     ${SQLite3_LIBRARY}
 )
 
 if(WIN32)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:Qt6::Core>"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:Qt6::Gui>"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "$<TARGET_FILE:Qt6::Widgets>"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-        COMMENT "Copying Qt6 DLLs to output directory"
-    )
+    get_target_property(Qt6Core_location Qt6::Core IMPORTED_LOCATION_RELEASE)
+    if(Qt6Core_location)
+        get_filename_component(QT_BIN_DIR ${Qt6Core_location} DIRECTORY)
+        foreach(QT_COMPONENT IN LISTS QT_COMPONENTS)
+            set(COPY_DLL_COMMAND
+                "COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                \"${QT_BIN_DIR}/Qt6${QT_COMPONENT}.dll\"
+                \"$<TARGET_FILE_DIR:${PROJECT_NAME}>\"")
+            list(APPEND COPY_DLL_COMMANDS ${COPY_DLL_COMMAND})
+        endforeach()
+        
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            ${COPY_DLL_COMMANDS}
+            COMMENT "Copying Qt6 DLLs to output directory"
+        )
+    endif()
 endif()
