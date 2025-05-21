@@ -133,10 +133,10 @@ if(WIN32)
             get_target_property(dll_location Qt6::${component} IMPORTED_LOCATION_RELEASE)
             if(dll_location)
                 get_filename_component(dll_dir ${dll_location} DIRECTORY)
-                add_custom_command(TARGET ${target} POST_BUILD
+                add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
                     COMMAND ${CMAKE_COMMAND} -E copy_if_different
                         "${dll_dir}/Qt6${component}.dll"
-                        $<TARGET_FILE_DIR:${target}>
+                        $<TARGET_FILE_DIR:${PROJECT_NAME}>
                     COMMENT "Copying Qt6::${component} DLL"
                 )
             endif()
