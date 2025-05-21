@@ -32,7 +32,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Configure
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -GNinja
 
     - name: MacOS Build
       run: cmake --build build --parallel $(sysctl -n hw.ncpu)
@@ -55,7 +55,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Configure
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -GNinja
 
     - name: Build
       run: cmake --build build --config Release --parallel 4
