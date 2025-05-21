@@ -90,6 +90,12 @@ if(NOT Qt6_FOUND OR QT_FORCE_INSTALL)
     find_package(Qt6 REQUIRED COMPONENTS ${QT_COMPONENTS})
 endif()
 
+foreach(component IN LISTS QT_COMPONENTS)
+    if(NOT TARGET Qt6::${component})
+        message(FATAL_ERROR "Qt6 component ${component} not found. Check your Qt installation.")
+    endif()
+endforeach()
+
 #-----------------------------------------------------------------------------
 # SQLite3 Build
 #-----------------------------------------------------------------------------
@@ -120,33 +126,34 @@ foreach(component IN LISTS QT_COMPONENTS)
 endforeach()
 
 if(WIN32)
-    foreach(component IN LISTS QT_COMPONENTS)
-        if(TARGET Qt6::${component})
-            get_target_property(dll_release Qt6::${component} IMPORTED_LOCATION_RELEASE)
-            get_target_property(dll_debug Qt6::${component} IMPORTED_LOCATION_DEBUG)
-            if(dll_release)
-                get_filename_component(dll_dir ${dll_release} DIRECTORY)
-                add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                        "${dll_dir}/Qt6${component}.dll"
-                        $<TARGET_FILE_DIR:${PROJECT_NAME}>
-                )
-            endif()
-            
-            if(dll_debug AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-                get_filename_component(dll_dir ${dll_debug} DIRECTORY)
-                add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                        "${dll_dir}/Qt6${component}d.dll"
-                        $<TARGET_FILE_DIR:${PROJECT_NAME}>
-                )
-            endif()
-        endif()
-        message(STATUS "Qt6 ${component} location: $<TARGET_FILE:Qt6::${component}>")
-    endforeach()
-    get_target_property(QtCore_location Qt6::Core IMPORTED_LOCATION_RELEASE)
-    if(QtCore_location)
-        get_filename_component(QT_BIN_DIR ${QtCore_location} DIRECTORY)
+    get_target_property(Qt6_core_location Qt6::Core IMPORTED_LOCATION_RELEASE)
+    if(NOT Qt6_core_location)
+        get_target_property(Qt6_core_location Qt6::Core IMPORTED_LOCATION)
+    endif()
+    if(Qt6_core_location)
+        get_filename_component(QT_BIN_DIR "${Qt6_core_location}" DIRECTORY)
         set(ENV{PATH} "${QT_BIN_DIR};$ENV{PATH}")
+        foreach(component IN LISTS QT_COMPONENTS)
+            if(TARGET Qt6::${component})
+                # Release DLL
+                add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                        "${QT_BIN_DIR}/Qt6${component}.dll"
+                        $<TARGET_FILE_DIR:${PROJECT_NAME}>
+                    COMMENT "Copying Qt6${component}.dll"
+                )
+                # Debug DLL
+                if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+                    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                            "${QT_BIN_DIR}/Qt6${component}d.dll"
+                            $<TARGET_FILE_DIR:${PROJECT_NAME}>
+                        COMMENT "Copying Qt6${component}d.dll"
+                    )
+                endif()
+            endif()
+        endforeach()
+    else()
+        message(WARNING "Could not determine Qt binary directory! DLLs may be missing.")
     endif()
 endif()
