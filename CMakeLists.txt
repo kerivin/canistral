@@ -58,7 +58,7 @@ endif()
 #-----------------------------------------------------------------------------
 
 if(WIN32)
-    execute_process(COMMAND ${CHOCO} install python --version -y --no-progress)
+    execute_process(COMMAND ${CHOCO} install python -y --no-progress)
 elseif(APPLE)
     execute_process(COMMAND ${BREW} install python)
 else()
