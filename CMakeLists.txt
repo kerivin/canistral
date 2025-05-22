@@ -65,7 +65,7 @@ else()
     execute_process(COMMAND sudo ${APT_GET} install -y python3-dev python3-venv)
 endif()
 
-find_package(Python3 3.6 REQUIRED COMPONENTS Interpreter Development)
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 
 set(PYTHON_VENV_DIR "${CMAKE_BINARY_DIR}/python_venv")
 file(MAKE_DIRECTORY ${PYTHON_VENV_DIR})
@@ -89,18 +89,19 @@ endif()
 execute_process(COMMAND ${PYTHON_PIP} --version)
 set(PYTHON_PACKAGES "pybind11 translators python-iso639")
 
-foreach(PKG pybind11 translators python-iso639)
+foreach(pkg pybind11 translators python-iso639)
     execute_process(
-        COMMAND ${PYTHON_PIP} install ${PKG}
-        RESULT_VARIABLE PKG_RESULT
-        ERROR_VARIABLE PKG_ERROR
+        COMMAND ${PYTHON_PIP} install ${pkg}
+        RESULT_VARIABLE pkg_result
+        ERROR_VARIABLE pkg_error
     )
-    if(NOT PKG_RESULT EQUAL 0)
-        message(WARNING "Failed to install ${PKG}:\n${PKG_ERROR}")
+    if(NOT pkg_result EQUAL 0)
+        message(WARNING "Failed to install ${pkg}:\n${pkg_error}")
     endif()
 endforeach()
 
 set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python" CACHE INTERNAL "")
+execute_process(COMMAND ${Python3_EXECUTABLE} --version)
 
 #-----------------------------------------------------------------------------
 # PyBind11 Setup
@@ -110,7 +111,7 @@ include(FetchContent)
 FetchContent_Declare(
   pybind11
   GIT_REPOSITORY https://github.com/pybind/pybind11.git
-  GIT_TAG v2.11.1
+  GIT_TAG v2.9
 )
 FetchContent_MakeAvailable(pybind11)
 
