@@ -87,9 +87,12 @@ else()
 endif()
 
 execute_process(COMMAND ${PYTHON_PIP} --version)
-set(PYTHON_PACKAGES "pybind11 translators python-iso639")
+set(PYTHON_PACKAGES
+    translators
+    python-iso639
+)
 
-foreach(pkg pybind11 translators python-iso639)
+foreach(pkg IN LISTS PYTHON_PACKAGES)
     execute_process(
         COMMAND ${PYTHON_PIP} install ${pkg}
         RESULT_VARIABLE pkg_result
@@ -100,18 +103,23 @@ foreach(pkg pybind11 translators python-iso639)
     endif()
 endforeach()
 
-set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python" CACHE INTERNAL "")
+if(WIN32)
+    set(PYTHON_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe" CACHE INTERNAL "")
+else()
+    set(PYTHON_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python" CACHE INTERNAL "")
+endif()
+
 execute_process(COMMAND ${Python3_EXECUTABLE} --version)
 
 #-----------------------------------------------------------------------------
-# PyBind11 Setup
+# PyBind11
 #-----------------------------------------------------------------------------
 
 include(FetchContent)
 FetchContent_Declare(
   pybind11
   GIT_REPOSITORY https://github.com/pybind/pybind11.git
-  GIT_TAG v2.9
+  GIT_TAG v2.13.6
 )
 FetchContent_MakeAvailable(pybind11)
 
@@ -128,7 +136,7 @@ else()
 endif()
 
 #-----------------------------------------------------------------------------
-# Qt6 Installation and Configuration
+# Qt6
 #-----------------------------------------------------------------------------
 
 if(NOT DEFINED QT_FORCE_INSTALL)
@@ -180,7 +188,7 @@ foreach(component IN LISTS QT_COMPONENTS)
 endforeach()
 
 #-----------------------------------------------------------------------------
-# SQLite3 Build
+# SQLite3
 #-----------------------------------------------------------------------------
 
 set(SQLite3_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rd/sqlite3")
@@ -191,7 +199,7 @@ set_target_properties(${SQLite3_LIBRARY} PROPERTIES LINKER_LANGUAGE C)
 target_include_directories(${SQLite3_LIBRARY} PUBLIC ${SQLite3_INCLUDE_DIR})
 
 #-----------------------------------------------------------------------------
-# Application Setup
+# EXECUTABLE SETUP
 #-----------------------------------------------------------------------------
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
@@ -225,14 +233,6 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     QT_NO_KEYWORDS
 )
 
-# Set Python executable path for the virtual environment
-if(WIN32)
-    set(PYTHON_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe")
-else()
-    set(PYTHON_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
-endif()
-
-# Copy Python virtual environment to build directory
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${PYTHON_VENV_DIR}
@@ -240,7 +240,6 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMENT "Copying Python virtual environment"
 )
 
-# Copy Windows DLLs
 if(WIN32)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
