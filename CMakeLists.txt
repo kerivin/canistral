@@ -65,7 +65,7 @@ else()
     execute_process(COMMAND sudo ${APT_GET} install -y python3-dev python3-venv)
 endif()
 
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+find_package(Python3 3.6 REQUIRED COMPONENTS Interpreter Development)
 
 set(PYTHON_VENV_DIR "${CMAKE_BINARY_DIR}/python_venv")
 file(MAKE_DIRECTORY ${PYTHON_VENV_DIR})
@@ -139,7 +139,7 @@ set(QT_COMPONENTS Core Gui Widgets)
 find_package(Qt6 QUIET COMPONENTS ${QT_COMPONENTS})
 
 if(NOT Qt6_FOUND OR QT_FORCE_INSTALL)
-    message(STATUS "Qt6 not found - installing...")
+    message(STATUS "Installing Qt6...")
     if(WIN32)
         execute_process(COMMAND ${CHOCO} install qt6-base-dev -y --version 6.4.2 --no-progress --params="/InstallationPath C:/Qt")
         set(QT_PATHS 
