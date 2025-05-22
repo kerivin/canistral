@@ -115,6 +115,11 @@ execute_process(COMMAND ${Python3_EXECUTABLE} --version)
 # PyBind11
 #-----------------------------------------------------------------------------
 
+option(PYBIND11_FINDPYTHON "Use PyBind11's built-in Python discovery" ON)
+if(PYBIND11_FINDPYTHON)
+    set(PYBIND11_NEWPYTHON ON)
+endif()
+
 include(FetchContent)
 FetchContent_Declare(
   pybind11
@@ -231,8 +236,6 @@ endforeach()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     QT_NO_KEYWORDS
-    PYBIND11_SIMPLE_GIL_MANAGEMENT
-    Py_LIMITED_API=0x030D0000
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

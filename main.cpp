@@ -21,6 +21,12 @@ int main(int argc, char *argv[])
         sqlite3_close(db);
     }
 
+    {
+        trnist::py::scoped_interpreter guard{};
+        auto sys = trnist::py::module_::import("sys");
+        QMessageBox::information(nullptr, "Python version", QString::fromStdString(sys.attr("version").cast<std::string>()));
+    }
+
     try
     {
         trnist::core::translation::ApiTranslator translator;
