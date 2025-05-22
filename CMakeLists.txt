@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(PYTHON_VERSION "3.12")
+set(PYTHON_VERSION "3.10")
 
 if(MSVC)
     add_compile_options(/Zc:__cplusplus /permissive- /W3)
