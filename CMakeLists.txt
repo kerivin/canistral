@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+set(PYTHON_VERSION "3.12")
+
 if(MSVC)
     add_compile_options(/Zc:__cplusplus /permissive- /W3)
 else()
@@ -58,14 +60,14 @@ endif()
 #-----------------------------------------------------------------------------
 
 if(WIN32)
-    execute_process(COMMAND ${CHOCO} install python -y --no-progress)
+    execute_process(COMMAND ${CHOCO} install python --version=${PYTHON_VERSION} -y --no-progress)
 elseif(APPLE)
-    execute_process(COMMAND ${BREW} install python)
+    execute_process(COMMAND ${BREW} install python ${PYTHON_VERSION})
 else()
     execute_process(COMMAND sudo ${APT_GET} install -y python3-dev python3-venv)
 endif()
 
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+find_package(Python3 ${PYTHON_VERSION} REQUIRED COMPONENTS Interpreter Development)
 
 set(PYTHON_VENV_DIR "${CMAKE_BINARY_DIR}/python_venv")
 file(MAKE_DIRECTORY ${PYTHON_VENV_DIR})
@@ -90,6 +92,7 @@ execute_process(COMMAND ${PYTHON_PIP} --version)
 set(PYTHON_PACKAGES
     translators
     python-iso639
+    pybind11
 )
 
 foreach(pkg IN LISTS PYTHON_PACKAGES)
@@ -108,8 +111,7 @@ if(WIN32)
 else()
     set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
 endif()
-
-set(PYTHONPATH ${PYTHON_VENV_DIR}/lib/python3.12/site-packages)
+set(PYTHONPATH "${PYTHON_VENV_DIR}/lib/python${PYTHON_VERSION}/site-packages")
 
 execute_process(COMMAND ${Python3_EXECUTABLE} --version)
 
@@ -117,13 +119,9 @@ execute_process(COMMAND ${Python3_EXECUTABLE} --version)
 # PyBind11
 #-----------------------------------------------------------------------------
 
-include(FetchContent)
-FetchContent_Declare(
-  pybind11
-  GIT_REPOSITORY https://github.com/pybind/pybind11.git
-  GIT_TAG v2.13.6
-)
-FetchContent_MakeAvailable(pybind11)
+set(PYBIND11_FINDPYTHON ON)
+list(APPEND CMAKE_PREFIX_PATH "${PYTHON_VENV_DIR}/lib/python${PYTHON_VERSION}/site-packages/pybind11/share/cmake/pybind11")
+find_package(pybind11 REQUIRED)
 
 #-----------------------------------------------------------------------------
 # Pandoc
