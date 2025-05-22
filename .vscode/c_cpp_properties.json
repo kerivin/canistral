@@ -24,7 +24,8 @@
                 "/usr/include/x86_64-linux-gnu/qt6/QtWidgets",
                 "/usr/include/x86_64-linux-gnu/qt6",
                 "${workspaceFolder}/build/_deps/pybind11-src/include",
-                "/usr/include/x86_64-linux-gnu/qt6/QtCore"
+                "/usr/include/x86_64-linux-gnu/qt6/QtCore",
+                "/usr/include/python3.12"
             ],
             "defines": [
                 "QT_CORE_LIB",

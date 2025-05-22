@@ -1,9 +1,12 @@
 cmake_minimum_required(VERSION 3.21)
-project(TRnist LANGUAGES CXX)
+project(tr-nist LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(PYTHON_VERSION 3.12.3)
+set(PYBIND_VERSION 2.13.6)
 
 if(MSVC)
     add_compile_options(/Zc:__cplusplus /permissive- /W3)
@@ -58,14 +61,14 @@ endif()
 #-----------------------------------------------------------------------------
 
 if(WIN32)
-    execute_process(COMMAND ${CHOCO} install python -y --no-progress)
+    execute_process(COMMAND ${CHOCO} install python --version=${PYTHON_VERSION} -y --no-progress)
 elseif(APPLE)
-    execute_process(COMMAND ${BREW} install python)
+    execute_process(COMMAND ${BREW} install python@${PYTHON_VERSION})
 else()
-    execute_process(COMMAND sudo ${APT_GET} install -y python3-dev python3-venv)
+    execute_process(COMMAND sudo ${APT_GET} install -y python${PYTHON_VERSION} python3-dev python3-venv)
 endif()
 
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+find_package(Python3 ${PYTHON_VERSION} REQUIRED COMPONENTS Interpreter Development)
 
 set(PYTHON_VENV_DIR "${CMAKE_BINARY_DIR}/python_venv")
 file(MAKE_DIRECTORY ${PYTHON_VENV_DIR})
@@ -104,9 +107,9 @@ foreach(pkg IN LISTS PYTHON_PACKAGES)
 endforeach()
 
 if(WIN32)
-    set(PYTHON_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe" CACHE INTERNAL "")
+    set(PYTHON_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe")
 else()
-    set(PYTHON_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python" CACHE INTERNAL "")
+    set(PYTHON_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
 endif()
 
 execute_process(COMMAND ${Python3_EXECUTABLE} --version)
@@ -119,7 +122,7 @@ include(FetchContent)
 FetchContent_Declare(
   pybind11
   GIT_REPOSITORY https://github.com/pybind/pybind11.git
-  GIT_TAG v2.13.6
+  GIT_TAG v${PYBIND_VERSION}
 )
 FetchContent_MakeAvailable(pybind11)
 
@@ -240,6 +243,32 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMENT "Copying Python virtual environment"
 )
 
+get_target_property(Qt6_core_location Qt6::Core IMPORTED_LOCATION)
+if(Qt6_core_location)
+    get_filename_component(QT_LIB_DIR "${Qt6_core_location}" DIRECTORY)
+    
+    if(WIN32)
+        set(PLATFORM_LIB qwindows.dll)
+    elseif(APPLE)
+        set(PLATFORM_LIB libqcocoa.dylib)
+    else()
+        set(PLATFORM_LIB libqxcb.so)
+    endif()
+
+    find_path(QT_PLATFORMS_DIR
+        NAMES ${PLATFORM_LIB}
+        PATHS "${QT_LIB_DIR}/../plugins/platforms" "/usr/lib/qt6/plugins/platforms" "/usr/lib/x86_64-linux-gnu/qt6/plugins/platforms"
+        NO_DEFAULT_PATH
+    )
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/platforms/"
+        COMMAND ${CMAKE_COMMAND} -E copy
+            "${QT_PLATFORMS_DIR}/${PLATFORM_LIB}"
+            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/platforms/"
+    )
+endif()
+
 if(WIN32)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -247,12 +276,7 @@ if(WIN32)
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
         COMMAND ${CMAKE_COMMAND} -E echo "NOTE: Ensure Python is installed on target machine"
     )
-    get_target_property(Qt6_core_location Qt6::Core IMPORTED_LOCATION_RELEASE)
-    if(NOT Qt6_core_location)
-        get_target_property(Qt6_core_location Qt6::Core IMPORTED_LOCATION)
-    endif()
     if(Qt6_core_location)
-        get_filename_component(QT_BIN_DIR "${Qt6_core_location}" DIRECTORY)
         set(ENV{PATH} "${QT_BIN_DIR};$ENV{PATH}")
         foreach(component IN LISTS QT_COMPONENTS)
             if(TARGET Qt6::${component})
@@ -274,16 +298,6 @@ if(WIN32)
                 endif()
             endif()
         endforeach()
-
-        set(QT_PLUGINS_DIR "${QT_BIN_DIR}/../plugins")
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory
-                "$<TARGET_FILE_DIR:${PROJECT_NAME}>/platforms"
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                "${QT_PLUGINS_DIR}/platforms/qwindows.dll"
-                "$<TARGET_FILE_DIR:${PROJECT_NAME}>/platforms/"
-            COMMENT "Copying Qt platform plugin"
-        )
     else()
         message(WARNING "Could not determine Qt binary directory! DLLs may be missing.")
     endif()
