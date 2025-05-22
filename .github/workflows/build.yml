@@ -21,14 +21,14 @@ jobs:
     - name: Package
       run: |
         mkdir -p artifact
-        cp build/Canistral artifact/
-        tar czf Canistral-Linux.tar.gz artifact/*
+        cp build/${{ vars.PROJECT_NAME }} artifact/
+        tar czf ${{ vars.PROJECT_NAME }}-Linux.tar.gz artifact/*
       
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: Canistral-Linux
-        path: Canistral-Linux.tar.gz
+        name: ${{ vars.PROJECT_NAME }}-Linux
+        path: ${{ vars.PROJECT_NAME }}-Linux.tar.gz
 
   macOS:
     runs-on: macos-latest
@@ -48,14 +48,14 @@ jobs:
     - name: Package
       run: |
         mkdir -p artifact
-        cp build/Canistral artifact/
-        hdiutil create -volname Canistral -srcfolder artifact -ov Canistral-macOS.dmg
+        cp build/${{ vars.PROJECT_NAME }} artifact/
+        hdiutil create -volname ${{ vars.PROJECT_NAME }} -srcfolder artifact -ov ${{ vars.PROJECT_NAME }}-macOS.dmg
       
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: Canistral-macOS
-        path: Canistral-macOS.dmg
+        name: ${{ vars.PROJECT_NAME }}-macOS
+        path: ${{ vars.PROJECT_NAME }}-macOS.dmg
 
   windows:
     runs-on: windows-latest
@@ -94,14 +94,14 @@ jobs:
     - name: Package
       run: |
         mkdir artifact
-        copy "build\Canistral.exe" artifact\
+        copy "build\${{ vars.PROJECT_NAME }}.exe" artifact\
         copy "build\*.dll" artifact\
         mkdir artifact\platforms
         copy "build\platforms\*.dll" artifact\platforms
-        7z a "Canistral-Windows.zip" artifact\*
+        7z a "${{ vars.PROJECT_NAME }}-Windows.zip" artifact\*
       
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: Canistral-Windows
-        path: Canistral-Windows.zip
+        name: ${{ vars.PROJECT_NAME }}-Windows
+        path: ${{ vars.PROJECT_NAME }}-Windows.zip

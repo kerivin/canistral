@@ -3,8 +3,7 @@
         {
             "name": "Windows",
             "includePath": [
-                "${workspaceFolder}/include/**",
-                "${workspaceFolder}/build/dep-build/**"
+                "${workspaceFolder}/include/**"
             ],
             "defines": [
                 "UNICODE",
@@ -20,9 +19,12 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/include/**",
-                "${workspaceFolder}/build/dep-build/LibreOffice/sdk/include/**",
-                "${workspaceFolder}/build/dep-build/Qt/**",
-                "${workspaceFolder}/build/dep-build/SQLite/include/**"
+                "${workspaceFolder}/include/core",
+                "${workspaceFolder}/include",
+                "/usr/include/x86_64-linux-gnu/qt6/QtWidgets",
+                "/usr/include/x86_64-linux-gnu/qt6",
+                "${workspaceFolder}/build/_deps/pybind11-src/include",
+                "/usr/include/x86_64-linux-gnu/qt6/QtCore"
             ],
             "defines": [
                 "QT_CORE_LIB",

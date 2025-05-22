@@ -1,23 +1,36 @@
 #include <QApplication>
 #include <QMainWindow>
+#include <QMessageBox>
 #include <sqlite3.h>
+#include "core/translation/api_translator.h"
+#include "core/translation/context.h"
 
-int main(int argc, char *argv[]) {
-    // Must create QApplication first
+int main(int argc, char *argv[])
+{
     QApplication app(argc, argv);
-    
-    // Then create widgets
+
     QMainWindow mainWindow;
-    mainWindow.setWindowTitle("Canistral");
+    mainWindow.setWindowTitle("TRnist");
     mainWindow.resize(800, 600);
     mainWindow.show();
 
-    // SQLite example
     sqlite3 *db;
-    if(sqlite3_open(":memory:", &db) == SQLITE_OK) {
+    if (sqlite3_open(":memory:", &db) == SQLITE_OK)
+    {
         sqlite3_close(db);
     }
 
-    // Start event loop
+    try
+    {
+        trnist::core::translation::ApiTranslator translator;
+        QString result = QString::fromStdU16String(translator.translate(u"Alas, poor country! Almost afraid to know itself!",
+            { .api = "yandex", .from_lang = "en", .to_lang = "ru"}));
+        QMessageBox::information(nullptr, "Translation", result);
+    }
+    catch (const std::exception &e)
+    {
+        QMessageBox::critical(nullptr, "Error", e.what());
+    }
+
     return app.exec();
 }
