@@ -231,7 +231,7 @@ endforeach()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     QT_NO_KEYWORDS
-    PYBIND11_FINDPYTHON
+    PYTHON_EXECUTABLE=${Python3_EXECUTABLE}
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
