@@ -62,19 +62,40 @@ if(WIN32)
 elseif(APPLE)
     execute_process(COMMAND ${BREW} install python)
 else()
-    execute_process(COMMAND sudo ${APT_GET} install -y python3-dev)
+    execute_process(COMMAND sudo ${APT_GET} install -y python3-dev python3-venv)
 endif()
 
-find_package(Python3 3.7 REQUIRED COMPONENTS Interpreter Development)
+find_package(Python3 3.10 REQUIRED COMPONENTS Interpreter Development)
 
+set(PYTHON_VENV_DIR "${CMAKE_BINARY_DIR}/python_venv")
+file(MAKE_DIRECTORY ${PYTHON_VENV_DIR})
+
+execute_process(
+    COMMAND ${Python3_EXECUTABLE} -m venv "${PYTHON_VENV_DIR}"
+    RESULT_VARIABLE venv_result
+)
+if(NOT venv_result EQUAL 0)
+    message(FATAL_ERROR "Failed to create Python virtual environment")
+endif()
+
+if(WIN32)
+    set(PYTHON_PIP "${PYTHON_VENV_DIR}/Scripts/pip.exe")
+    execute_process(COMMAND ${PYTHON_VENV_DIR}/Scripts/Activate.ps1)
+else()
+    set(PYTHON_PIP "${PYTHON_VENV_DIR}/bin/pip")
+    execute_process(COMMAND ${PYTHON_VENV_DIR}/bin/activate)
+endif()
+
+execute_process(COMMAND ${PYTHON_PIP} --version)
 set(PYTHON_PACKAGES
     translators
     python-iso639
+    pybind11
 )
 
 foreach(pkg IN LISTS PYTHON_PACKAGES)
     execute_process(
-        COMMAND ${Python3_EXECUTABLE} -m pip install --user ${pkg}
+        COMMAND ${PYTHON_PIP} install ${pkg}
         RESULT_VARIABLE pkg_result
         ERROR_VARIABLE pkg_error
     )
@@ -83,6 +104,13 @@ foreach(pkg IN LISTS PYTHON_PACKAGES)
     endif()
 endforeach()
 
+if(WIN32)
+    set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe")
+else()
+    set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
+endif()
+
+message(STATUS "venv Python3: ${Python3_EXECUTABLE}")
 execute_process(COMMAND ${Python3_EXECUTABLE} --version)
 
 #-----------------------------------------------------------------------------
@@ -206,6 +234,13 @@ endforeach()
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     QT_NO_KEYWORDS
     PYTHON_EXECUTABLE=${Python3_EXECUTABLE}
+)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${PYTHON_VENV_DIR}
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>/python_venv
+    COMMENT "Copying Python virtual environment"
 )
 
 get_target_property(Qt6_core_location Qt6::Core IMPORTED_LOCATION)
