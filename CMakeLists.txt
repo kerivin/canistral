@@ -231,6 +231,8 @@ endforeach()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     QT_NO_KEYWORDS
+    PYBIND11_SIMPLE_GIL_MANAGEMENT
+    Py_LIMITED_API=0x030D0000
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
