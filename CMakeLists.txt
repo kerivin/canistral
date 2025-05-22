@@ -109,6 +109,8 @@ else()
     set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
 endif()
 
+set(PYTHONPATH ${PYTHON_VENV_DIR}/lib/python3.12/site-packages)
+
 execute_process(COMMAND ${Python3_EXECUTABLE} --version)
 
 #-----------------------------------------------------------------------------
