@@ -201,10 +201,9 @@ target_include_directories(${SQLite3_LIBRARY} PUBLIC ${SQLite3_INCLUDE_DIR})
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.h")
 
-add_executable(${PROJECT_NAME} WIN32
+qt_add_executable(${PROJECT_NAME} WIN32
     main.cpp
     ${SOURCES}
-    ${HEADERS}
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -220,7 +219,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${SQLite3_LIBRARY}
     Python3::Python
     pybind11::embed)
-
 foreach(component IN LISTS QT_COMPONENTS)
     target_link_libraries(${PROJECT_NAME} PRIVATE "Qt6::${component}")
 endforeach()
@@ -243,34 +241,6 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMENT "Copying Python virtual environment"
 )
 
-get_target_property(Qt6_core_location Qt6::Core IMPORTED_LOCATION)
-if(Qt6_core_location)
-    get_filename_component(QT_BIN_DIR "${Qt6_core_location}" DIRECTORY)
-    
-    if(WIN32)
-        set(PLATFORM_LIB qwindows.dll)
-    elseif(APPLE)
-        set(PLATFORM_LIB libqcocoa.dylib)
-    else()
-        set(PLATFORM_LIB libqxcb.so)
-    endif()
-
-    find_path(QT_PLATFORMS_DIR
-        NAMES ${PLATFORM_LIB}
-        PATHS "${QT_BIN_DIR}/../plugins/platforms" "/usr/lib/qt6/plugins/platforms" "/usr/lib/x86_64-linux-gnu/qt6/plugins/platforms"
-    )
-    message(STATUS "Qt platforms directory: ${QT_PLATFORMS_DIR}")
-    if (QT_PLATFORMS_DIR)
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory
-                "$<TARGET_FILE_DIR:${PROJECT_NAME}>/platforms/"
-            COMMAND ${CMAKE_COMMAND} -E copy
-                "${QT_PLATFORMS_DIR}/${PLATFORM_LIB}"
-                "$<TARGET_FILE_DIR:${PROJECT_NAME}>/platforms/"
-        )
-    endif()
-endif()
-
 if(WIN32)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -278,29 +248,4 @@ if(WIN32)
             "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
         COMMAND ${CMAKE_COMMAND} -E echo "NOTE: Ensure Python is installed on target machine"
     )
-    if(Qt6_core_location)
-        set(ENV{PATH} "${QT_BIN_DIR};$ENV{PATH}")
-        foreach(component IN LISTS QT_COMPONENTS)
-            if(TARGET Qt6::${component})
-                # Release DLL
-                add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                        "${QT_BIN_DIR}/Qt6${component}.dll"
-                        $<TARGET_FILE_DIR:${PROJECT_NAME}>
-                    COMMENT "Copying Qt6${component}.dll"
-                )
-                # Debug DLL
-                if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-                    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                            "${QT_BIN_DIR}/Qt6${component}d.dll"
-                            $<TARGET_FILE_DIR:${PROJECT_NAME}>
-                        COMMENT "Copying Qt6${component}d.dll"
-                    )
-                endif()
-            endif()
-        endforeach()
-    else()
-        message(WARNING "Could not determine Qt binary directory! DLLs may be missing.")
-    endif()
 endif()
