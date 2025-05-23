@@ -75,12 +75,17 @@ if(NOT venv_result EQUAL 0)
     message(FATAL_ERROR "Failed to create Python virtual environment")
 endif()
 
+message(STATUS "System Python prefix: ${SYSTEM_PYTHON_PREFIX}")
+set(PYTHON_STDLIB_DIR "${SYSTEM_PYTHON_PREFIX}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}")
+if(Python3_VERSION VERSION_GREATER_EQUAL "3.13")
+  set(PYTHON_STDLIB_DIR "${SYSTEM_PYTHON_PREFIX}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/stdlib")
+endif()
+
 file(COPY
-    "${SYSTEM_PYTHON_PREFIX}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/encodings"
-    "${SYSTEM_PYTHON_PREFIX}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/lib-dynload"
+    "${PYTHON_STDLIB_DIR}/encodings"
+    "${PYTHON_STDLIB_DIR}/lib-dynload"
     DESTINATION "${PYTHON_VENV_DIR}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}"
 )
-
 if(WIN32)
     file(COPY
         "${SYSTEM_PYTHON_PREFIX}/python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}.zip"
@@ -89,13 +94,13 @@ if(WIN32)
 endif()
 
 if(WIN32)
-    set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}\\Scripts\\python.exe")
-    set(PYTHON_PIP "${PYTHON_VENV_DIR}\\Scripts\\pip.exe")
+    set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe")
+    set(PYTHON_PIP "${PYTHON_VENV_DIR}/Scripts/pip.exe")
     execute_process(COMMAND ${PYTHON_VENV_DIR}/Scripts/Activate.ps1)
 
-    set(PYTHON_RUNTIME_HOME "${CMAKE_INSTALL_PREFIX}\\Scripts\\${PYTHON_VENV_NAME}")
-    # set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}\\python.exe")
-    set(PYTHON_RUNTIME "${PYTHON_RUNTIME_HOME}\\python.exe")
+    set(PYTHON_RUNTIME_HOME "${CMAKE_INSTALL_PREFIX}/Scripts/${PYTHON_VENV_NAME}")
+    # set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/python.exe")
+    set(PYTHON_RUNTIME "${PYTHON_RUNTIME_HOME}/python.exe")
 else()
     set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
     set(PYTHON_PIP "${PYTHON_VENV_DIR}/bin/pip")
@@ -138,7 +143,6 @@ FetchContent_Declare(
   GIT_TAG v2.13.6
 )
 FetchContent_MakeAvailable(pybind11)
-add_subdirectory(${CMAKE_BINARY_DIR}/_deps/pybind11-src)
 
 #-----------------------------------------------------------------------------
 # Pandoc
