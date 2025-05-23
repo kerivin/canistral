@@ -76,22 +76,6 @@ if(NOT venv_result EQUAL 0)
 endif()
 
 message(STATUS "System Python prefix: ${SYSTEM_PYTHON_PREFIX}")
-set(PYTHON_STDLIB_DIR "${SYSTEM_PYTHON_PREFIX}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}")
-if(Python3_VERSION VERSION_GREATER_EQUAL "3.13")
-  set(PYTHON_STDLIB_DIR "${SYSTEM_PYTHON_PREFIX}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/stdlib")
-endif()
-
-file(COPY
-    "${PYTHON_STDLIB_DIR}/encodings"
-    "${PYTHON_STDLIB_DIR}/lib-dynload"
-    DESTINATION "${PYTHON_VENV_DIR}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}"
-)
-if(WIN32)
-    file(COPY
-        "${SYSTEM_PYTHON_PREFIX}/python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}.zip"
-        DESTINATION "${PYTHON_VENV_DIR}/lib"
-    )
-endif()
 
 if(WIN32)
     set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe")
@@ -104,7 +88,7 @@ if(WIN32)
 else()
     set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
     set(PYTHON_PIP "${PYTHON_VENV_DIR}/bin/pip")
-    execute_process(COMMAND ${PYTHON_VENV_DIR}/bin/activate)
+    execute_process(COMMAND source ${PYTHON_VENV_DIR}/bin/activate)
 
     set(PYTHON_RUNTIME_HOME "${CMAKE_INSTALL_PREFIX}/${PYTHON_VENV_NAME}")
     # set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
