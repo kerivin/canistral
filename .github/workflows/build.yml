@@ -30,7 +30,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ vars.PROJECT_NAME }}-linux
-        path: ${{ vars.PROJECT_NAME }}.tar.gz
+        path: ${{ vars.PROJECT_NAME }}-linux.tar.gz
 
   macOS:
     runs-on: macos-latest
