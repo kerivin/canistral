@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-#include "python.h"
+#include "pybind.h"
 
 namespace trnist
 {
