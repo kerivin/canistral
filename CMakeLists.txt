@@ -90,7 +90,6 @@ execute_process(COMMAND ${PYTHON_PIP} --version)
 set(PYTHON_PACKAGES
     translators
     python-iso639
-    pybind11
 )
 
 foreach(pkg IN LISTS PYTHON_PACKAGES)
