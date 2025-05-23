@@ -4,9 +4,12 @@ on: [push, pull_request]
 
 jobs:
   linux:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
+    - uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
 
     - name: Configure
       run: cmake -B build -DCMAKE_BUILD_TYPE=Release -GNinja
@@ -34,6 +37,9 @@ jobs:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
+    - uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
 
     - name: Configure
       run: cmake -B build -DCMAKE_BUILD_TYPE=Release -GNinja
@@ -61,6 +67,9 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
+    - uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
 
     - name: Configure
       run: cmake -B build -DCMAKE_BUILD_TYPE=Release -GNinja
