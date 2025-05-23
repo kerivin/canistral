@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 project(tr-nist LANGUAGES CXX)
+set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/bin" CACHE PATH "Installation directory")
+message(STATUS "Installation folder: ${CMAKE_INSTALL_PREFIX}")
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -59,9 +61,10 @@ else()
     execute_process(COMMAND sudo ${APT_GET} install -y python3-dev python3-venv)
 endif()
 
-find_package(Python3 3.10 REQUIRED COMPONENTS Interpreter Development)
+find_package(Python3 3.11 REQUIRED COMPONENTS Interpreter Development)
 
-set(PYTHON_VENV_DIR "${CMAKE_BINARY_DIR}/python_venv")
+set(PYTHON_VENV_NAME python_venv)
+set(PYTHON_VENV_DIR "${CMAKE_BINARY_DIR}/${PYTHON_VENV_NAME}")
 file(MAKE_DIRECTORY ${PYTHON_VENV_DIR})
 
 execute_process(
@@ -72,13 +75,40 @@ if(NOT venv_result EQUAL 0)
     message(FATAL_ERROR "Failed to create Python virtual environment")
 endif()
 
+file(COPY
+    "${SYSTEM_PYTHON_PREFIX}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/encodings"
+    "${SYSTEM_PYTHON_PREFIX}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/lib-dynload"
+    DESTINATION "${PYTHON_VENV_DIR}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}"
+)
+
 if(WIN32)
-    set(PYTHON_PIP "${PYTHON_VENV_DIR}/Scripts/pip.exe")
+    file(COPY
+        "${SYSTEM_PYTHON_PREFIX}/python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}.zip"
+        DESTINATION "${PYTHON_VENV_DIR}/lib"
+    )
+endif()
+
+if(WIN32)
+    set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}\\Scripts\\python.exe")
+    set(PYTHON_PIP "${PYTHON_VENV_DIR}\\Scripts\\pip.exe")
     execute_process(COMMAND ${PYTHON_VENV_DIR}/Scripts/Activate.ps1)
+
+    set(PYTHON_RUNTIME_HOME "${CMAKE_INSTALL_PREFIX}\\Scripts\\${PYTHON_VENV_NAME}")
+    # set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}\\python.exe")
+    set(PYTHON_RUNTIME "${PYTHON_RUNTIME_HOME}\\python.exe")
 else()
+    set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
     set(PYTHON_PIP "${PYTHON_VENV_DIR}/bin/pip")
     execute_process(COMMAND ${PYTHON_VENV_DIR}/bin/activate)
+
+    set(PYTHON_RUNTIME_HOME "${CMAKE_INSTALL_PREFIX}/${PYTHON_VENV_NAME}")
+    # set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
+    set(PYTHON_RUNTIME "${PYTHON_RUNTIME_HOME}/python")
 endif()
+
+message(STATUS "PYTHON_RUNTIME_HOME: ${PYTHON_RUNTIME_HOME}")
+message(STATUS "PYTHON_RUNTIME: ${PYTHON_RUNTIME}")
+message(STATUS "New Python3_EXECUTABLE: ${Python3_EXECUTABLE}")
 
 execute_process(COMMAND ${PYTHON_PIP} --version)
 set(PYTHON_PACKAGES
@@ -96,15 +126,6 @@ foreach(pkg IN LISTS PYTHON_PACKAGES)
         message(WARNING "Failed to install ${pkg}:\n${pkg_error}")
     endif()
 endforeach()
-
-if(WIN32)
-    set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe")
-else()
-    set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
-endif()
-
-message(STATUS "venv Python3: ${Python3_EXECUTABLE}")
-execute_process(COMMAND ${Python3_EXECUTABLE} --version)
 
 #-----------------------------------------------------------------------------
 # PyBind11
@@ -195,6 +216,16 @@ set_target_properties(${SQLite3_LIBRARY} PROPERTIES LINKER_LANGUAGE C)
 target_include_directories(${SQLite3_LIBRARY} PUBLIC ${SQLite3_INCLUDE_DIR})
 
 #-----------------------------------------------------------------------------
+# PRE-BUILD GENERATE FILES
+#-----------------------------------------------------------------------------
+
+configure_file(
+    ${CMAKE_SOURCE_DIR}/src/python_init.cpp.in
+    ${CMAKE_BINARY_DIR}/generated/python_init.cpp
+    @ONLY
+)
+
+#-----------------------------------------------------------------------------
 # EXECUTABLE SETUP
 #-----------------------------------------------------------------------------
 
@@ -215,6 +246,8 @@ target_include_directories(${PROJECT_NAME}
         ${pybind11_INCLUDE_DIRS}
 )
 
+target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/generated/python_init.cpp)
+
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${SQLite3_LIBRARY}
     Python3::Python
@@ -232,15 +265,16 @@ endif()
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     QT_NO_KEYWORDS
-    PYTHON_EXECUTABLE=${Python3_EXECUTABLE}
+    PYTHON_EXECUTABLE=${PYTHON_RUNTIME}
 )
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${PYTHON_VENV_DIR}
-        $<TARGET_FILE_DIR:${PROJECT_NAME}>/python_venv
-    COMMENT "Copying Python virtual environment"
-)
+if(UNIX AND NOT APPLE)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE QT_QPA_PLATFORM=xcb)
+endif()
+
+#-----------------------------------------------------------------------------
+# INSTALL
+#-----------------------------------------------------------------------------
 
 get_target_property(Qt6_core_location Qt6::Core IMPORTED_LOCATION)
 if(Qt6_core_location)
@@ -259,47 +293,62 @@ if(Qt6_core_location)
         PATHS "${QT_BIN_DIR}/../plugins/platforms" "/usr/lib/qt6/plugins/platforms" "/usr/lib/x86_64-linux-gnu/qt6/plugins/platforms"
     )
     message(STATUS "Qt platforms directory: ${QT_PLATFORMS_DIR}")
-    if (QT_PLATFORMS_DIR)
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory
-                "$<TARGET_FILE_DIR:${PROJECT_NAME}>/platforms/"
-            COMMAND ${CMAKE_COMMAND} -E copy
-                "${QT_PLATFORMS_DIR}/${PLATFORM_LIB}"
-                "$<TARGET_FILE_DIR:${PROJECT_NAME}>/platforms/"
-        )
-    endif()
 endif()
 
+install(TARGETS ${PROJECT_NAME}
+        RUNTIME DESTINATION .
+        BUNDLE DESTINATION .
+        LIBRARY DESTINATION .
+        ARCHIVE DESTINATION .)
+
+install(DIRECTORY ${PYTHON_VENV_DIR}
+        DESTINATION .
+        PATTERN "__pycache__" EXCLUDE
+        PATTERN "*.pyc" EXCLUDE
+        PATTERN "*.dist-info" EXCLUDE
+        PATTERN "*.egg-info" EXCLUDE)
+
 if(WIN32)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${Python3_LIBRARIES}"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-        COMMAND ${CMAKE_COMMAND} -E echo "NOTE: Ensure Python is installed on target machine"
-    )
+    install(FILES ${Python3_LIBRARIES}
+            DESTINATION .
+            RENAME python3.dll)
+    if(QT_PLATFORMS_DIR)
+        install(DIRECTORY ${QT_PLATFORMS_DIR}/
+                DESTINATION platforms
+                FILES_MATCHING PATTERN "*.dll")
+    endif()
     if(Qt6_core_location)
-        set(ENV{PATH} "${QT_BIN_DIR};$ENV{PATH}")
         foreach(component IN LISTS QT_COMPONENTS)
             if(TARGET Qt6::${component})
-                # Release DLL
-                add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                        "${QT_BIN_DIR}/Qt6${component}.dll"
-                        $<TARGET_FILE_DIR:${PROJECT_NAME}>
-                    COMMENT "Copying Qt6${component}.dll"
-                )
-                # Debug DLL
+                install(FILES "${QT_BIN_DIR}/Qt6${component}.dll"
+                        DESTINATION .)
                 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-                    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                            "${QT_BIN_DIR}/Qt6${component}d.dll"
-                            $<TARGET_FILE_DIR:${PROJECT_NAME}>
-                        COMMENT "Copying Qt6${component}d.dll"
-                    )
+                    install(FILES "${QT_BIN_DIR}/Qt6${component}d.dll"
+                            DESTINATION .)
                 endif()
             endif()
         endforeach()
-    else()
-        message(WARNING "Could not determine Qt binary directory! DLLs may be missing.")
     endif()
 endif()
+
+if(UNIX AND QT_PLATFORMS_DIR)
+    install(DIRECTORY ${QT_PLATFORMS_DIR}/
+            DESTINATION platforms
+            FILES_MATCHING PATTERN "*${PLATFORM_LIB}")
+endif()
+
+include(InstallRequiredSystemLibraries)
+
+set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "${PROJECT_NAME}")
+
+if(WIN32)
+    set(CPACK_GENERATOR "NSIS;ZIP")
+    set(CPACK_NSIS_MODIFY_PATH ON)
+elseif(APPLE)
+    set(CPACK_GENERATOR "DragNDrop;TGZ")
+else()
+    set(CPACK_GENERATOR "DEB;TGZ")
+endif()
+
+include(CPack)

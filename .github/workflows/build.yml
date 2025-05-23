@@ -4,31 +4,33 @@ on: [push, pull_request]
 
 jobs:
   linux:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
 
     - name: Configure
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -GNinja
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=bin -GNinja
 
     - name: Linux Build
       run: cmake --build build --parallel $(nproc)
 
-    - name: Build Directory Info
-      continue-on-error: true
-      run: find build -print | sed -e 's;[^/]*/;|──;g;s;──|; |;g'
+    - name: Install
+      run: cmake --install build
 
-    - name: Package
+    - name: Directory Tree
+      continue-on-error: true
+      run: find bin -print | sed -e 's;[^/]*/;|──;g;s;──|; |;g'
+
+    - name: Package tar.gz
       run: |
-        mkdir -p artifact
-        cp build/${{ vars.PROJECT_NAME }} artifact/
-        tar czf ${{ vars.PROJECT_NAME }}-Linux.tar.gz artifact/*
+        cd bin
+        tar czf ../${{ vars.PROJECT_NAME }}-linux.tar.gz .
       
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ vars.PROJECT_NAME }}-Linux
-        path: ${{ vars.PROJECT_NAME }}-Linux.tar.gz
+        name: ${{ vars.PROJECT_NAME }}-linux
+        path: ${{ vars.PROJECT_NAME }}.tar.gz
 
   macOS:
     runs-on: macos-latest
@@ -36,26 +38,40 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Configure
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -GNinja
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=bin -GNinja
 
     - name: MacOS Build
       run: cmake --build build --parallel $(sysctl -n hw.ncpu)
 
-    - name: Build Directory Info
-      continue-on-error: true
-      run: find build -print | sed -e 's;[^/]*/;|──;g;s;──|; |;g'
+    - name: Install
+      run: cmake --install build
 
-    - name: Package
+    - name: Directory Tree
+      continue-on-error: true
+      run: find bin -print | sed -e 's;[^/]*/;|──;g;s;──|; |;g'
+
+    - name: Package DMG
       run: |
-        mkdir -p artifact
-        cp build/${{ vars.PROJECT_NAME }} artifact/
-        hdiutil create -volname ${{ vars.PROJECT_NAME }} -srcfolder artifact -ov ${{ vars.PROJECT_NAME }}-macOS.dmg
-      
+        cd bin
+        hdiutil create \
+          -volname "${{ vars.PROJECT_NAME }}" \
+          -srcfolder . \
+          -ov \
+          -format UDZO \
+          ../${{ vars.PROJECT_NAME }}-macOS.dmg
+
+    - name: Package tar.gz
+      run: |
+        cd bin
+        tar czf ../${{ vars.PROJECT_NAME }}-macOS.tar.gz .
+
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ vars.PROJECT_NAME }}-macOS
-        path: ${{ vars.PROJECT_NAME }}-macOS.dmg
+        path: |
+          ${{ vars.PROJECT_NAME }}-macOS.dmg
+          ${{ vars.PROJECT_NAME }}-macOS.tar.gz
 
   windows:
     runs-on: windows-latest
@@ -63,12 +79,15 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Configure
-      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -GNinja
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=bin -GNinja
 
     - name: Build
       run: cmake --build build --config Release --parallel 4
 
-    - name: Build Directory Info
+    - name: Install
+      run: cmake --install build
+
+    - name: Directory Tree
       continue-on-error: true
       shell: pwsh
       run: |
@@ -89,19 +108,15 @@ jobs:
                 }
             }
         }
-        Show-Tree -Path "build"
+        Show-Tree -Path "bin"
 
-    - name: Package
+    - name: Package zip
       run: |
-        mkdir artifact
-        copy "build\${{ vars.PROJECT_NAME }}.exe" artifact\
-        copy "build\*.dll" artifact\
-        mkdir artifact\platforms
-        copy "build\platforms\*.dll" artifact\platforms
-        7z a "${{ vars.PROJECT_NAME }}-Windows.zip" artifact\*
+        cd bin
+        7z a -tzip ../${{ vars.PROJECT_NAME }}-windows.zip *
       
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ vars.PROJECT_NAME }}-Windows
-        path: ${{ vars.PROJECT_NAME }}-Windows.zip
+        name: ${{ vars.PROJECT_NAME }}-windows
+        path: ${{ vars.PROJECT_NAME }}-windows.zip

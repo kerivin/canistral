@@ -78,6 +78,7 @@
         "any": "cpp",
         "bitset": "cpp",
         "csignal": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "*.in": "cpp"
     }
 }

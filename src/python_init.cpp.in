@@ -1,0 +1,27 @@
+#include <Python.h>
+#include <string>
+#include <stdexcept>
+
+PyStatus initialize_embedded_python()
+{
+	PyConfig config;
+	PyConfig_InitPythonConfig(&config);
+
+	config.isolated = 1;
+	config.site_import = 1;
+	config.use_environment = 1;
+
+	PyConfig_SetString(&config, &config.home, L"@PYTHON_RUNTIME_HOME@");
+	PyWideStringList_Append(&config.module_search_paths, L"@PYTHON_RUNTIME_HOME@/lib/python@Python3_VERSION_MAJOR@.@Python3_VERSION_MINOR@/site-packages");
+	PyWideStringList_Append(&config.module_search_paths, L"@PYTHON_RUNTIME_HOME@/lib/python@Python3_VERSION_MAJOR@.@Python3_VERSION_MINOR@/lib-dynload");
+	PyWideStringList_Append(&config.module_search_paths, L"@PYTHON_RUNTIME_HOME@/lib/python@Python3_VERSION_MAJOR@.@Python3_VERSION_MINOR@/encodings");
+	PyConfig_SetString(&config, &config.executable, L"@PYTHON_RUNTIME@");
+	const auto result = Py_InitializeFromConfig(&config);
+	PyConfig_Clear(&config);
+	return result;
+}
+
+void finalize_embedded_python()
+{
+	Py_Finalize();
+}
