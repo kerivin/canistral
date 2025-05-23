@@ -245,7 +245,7 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 
 get_target_property(Qt6_core_location Qt6::Core IMPORTED_LOCATION)
 if(Qt6_core_location)
-    get_filename_component(QT_LIB_DIR "${Qt6_core_location}" DIRECTORY)
+    get_filename_component(QT_BIN_DIR "${Qt6_core_location}" DIRECTORY)
     
     if(WIN32)
         set(PLATFORM_LIB qwindows.dll)
@@ -257,7 +257,7 @@ if(Qt6_core_location)
 
     find_path(QT_PLATFORMS_DIR
         NAMES ${PLATFORM_LIB}
-        PATHS "${QT_LIB_DIR}/../plugins/platforms" "/usr/lib/qt6/plugins/platforms" "/usr/lib/x86_64-linux-gnu/qt6/plugins/platforms"
+        PATHS "${QT_BIN_DIR}/../plugins/platforms" "/usr/lib/qt6/plugins/platforms" "/usr/lib/x86_64-linux-gnu/qt6/plugins/platforms"
         NO_DEFAULT_PATH
     )
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
