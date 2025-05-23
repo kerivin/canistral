@@ -201,10 +201,9 @@ target_include_directories(${SQLite3_LIBRARY} PUBLIC ${SQLite3_INCLUDE_DIR})
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.h")
 
-add_executable(${PROJECT_NAME} WIN32
+qt_add_executable(${PROJECT_NAME} WIN32
     main.cpp
     ${SOURCES}
-    ${HEADERS}
 )
 
 target_include_directories(${PROJECT_NAME}
