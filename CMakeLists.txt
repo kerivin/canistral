@@ -95,16 +95,12 @@ if(NOT EXISTS "${PYTHON_VENV_DIR}/lib/python${Python3_VERSION_MAJOR}.${Python3_V
     )
 endif()
 
-message(STATUS "System Python prefix: ${SYSTEM_PYTHON_PREFIX}")
-message(STATUS "Python standard library: ${SYSTEM_STDLIB_PATH}")
-
 if(WIN32)
     set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe")
     set(PYTHON_PIP "${PYTHON_VENV_DIR}/Scripts/pip.exe")
     execute_process(COMMAND ${PYTHON_VENV_DIR}/Scripts/Activate.ps1)
 
     set(PYTHON_RUNTIME_HOME "${CMAKE_INSTALL_PREFIX}/${PYTHON_VENV_NAME}")
-    # set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/python.exe")
     set(PYTHON_RUNTIME "${PYTHON_RUNTIME_HOME}/python.exe")
 else()
     set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
@@ -112,10 +108,8 @@ else()
     execute_process(COMMAND source ${PYTHON_VENV_DIR}/bin/activate)
 
     set(PYTHON_RUNTIME_HOME "${CMAKE_INSTALL_PREFIX}/${PYTHON_VENV_NAME}")
-    # set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
     set(PYTHON_RUNTIME "${PYTHON_RUNTIME_HOME}/python")
 endif()
-execute_process(COMMAND ${PYTHON_PIP} install --upgrade -r requirements.txt)
 
 message(STATUS "PYTHON_RUNTIME_HOME: ${PYTHON_RUNTIME_HOME}")
 message(STATUS "PYTHON_RUNTIME: ${PYTHON_RUNTIME}")
@@ -289,7 +283,7 @@ add_custom_command(
     COMMENT "Copying encodings directory"
 )
 
-if(WIN32)
+if(WIN32 AND Python3_VERSION VERSION_LESS "3.13")
     file(COPY
         "${SYSTEM_STDLIB_PATH}/../python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}.zip"
         DESTINATION "${PYTHON_VENV_DIR}/lib"

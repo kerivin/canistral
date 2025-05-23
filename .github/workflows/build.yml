@@ -29,7 +29,7 @@ jobs:
     - name: Upload .tar.gz
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ vars.PROJECT_NAME }}-linux
+        name: ${{ vars.PROJECT_NAME }}-linux.tar.gz
         path: ${{ vars.PROJECT_NAME }}-linux.tar.gz
 
   macOS:
@@ -122,5 +122,5 @@ jobs:
     - name: Upload zip
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ vars.PROJECT_NAME }}-windows
+        name: ${{ vars.PROJECT_NAME }}-windows.zip
         path: ${{ vars.PROJECT_NAME }}-windows.zip
