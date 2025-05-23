@@ -123,6 +123,7 @@ FetchContent_Declare(
   GIT_TAG v2.13.6
 )
 FetchContent_MakeAvailable(pybind11)
+add_subdirectory(${CMAKE_BINARY_DIR}/_deps/pybind11-src)
 
 #-----------------------------------------------------------------------------
 # Pandoc
