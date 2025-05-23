@@ -1,13 +1,14 @@
 #include <Python.h>
 #include <string>
 #include <stdexcept>
+#include <pybind11/embed.h>
 
 PyStatus initialize_embedded_python()
 {
 	PyConfig config;
 	PyConfig_InitPythonConfig(&config);
 
-	config.isolated = 1;
+	config.isolated = 0;
 	config.site_import = 1;
 	config.use_environment = 1;
 
@@ -18,6 +19,8 @@ PyStatus initialize_embedded_python()
 	PyConfig_SetString(&config, &config.executable, L"@PYTHON_RUNTIME@");
 	const auto result = Py_InitializeFromConfig(&config);
 	PyConfig_Clear(&config);
+
+	//pybind11::initialize_interpreter(false);
 	return result;
 }
 

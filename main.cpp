@@ -5,8 +5,8 @@
 #include "core/translation/api_translator.h"
 #include "core/translation/context.h"
 
-PyStatus initialize_embedded_python();
-void finalize_embedded_python();
+// PyStatus initialize_embedded_python();
+// void finalize_embedded_python();
 
 int main(int argc, char *argv[])
 {
@@ -31,10 +31,15 @@ int main(int argc, char *argv[])
             sqlite3_close(db);
         }
 
+        try
         {
             trnist::py::scoped_interpreter guard{};
             auto sys = trnist::py::module_::import("sys");
             QMessageBox::information(nullptr, "Python version", QString::fromStdString(sys.attr("version").cast<std::string>()));
+        }
+        catch (const std::exception &e)
+        {
+            QMessageBox::critical(nullptr, "Error", e.what());
         }
 
         try
@@ -49,7 +54,7 @@ int main(int argc, char *argv[])
             QMessageBox::critical(nullptr, "Error", e.what());
         }
 
-        finalize_embedded_python();
+        // finalize_embedded_python();
         return app.exec();
     }
 }

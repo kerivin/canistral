@@ -75,8 +75,28 @@ if(NOT venv_result EQUAL 0)
     message(FATAL_ERROR "Failed to create Python virtual environment")
 endif()
 
+execute_process(
+  COMMAND ${Python3_EXECUTABLE} -c 
+    "import os, sys; print(os.path.realpath(os.path.dirname(os.__file__)))"
+  OUTPUT_VARIABLE SYSTEM_STDLIB_PATH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(NOT SYSTEM_STDLIB_PATH)
+  message(FATAL_ERROR "Failed to detect Python standard library path!")
+else()
+  message(STATUS "Found Python stdlib at: ${SYSTEM_STDLIB_PATH}")
+endif()
+
+if(NOT EXISTS "${PYTHON_VENV_DIR}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/encodings")
+    execute_process(
+        COMMAND ${Python3_EXECUTABLE} -c "import os; print(os.path.dirname(os.__file__))"
+        OUTPUT_VARIABLE SYSTEM_STDLIB_PATH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+endif()
+
 message(STATUS "System Python prefix: ${SYSTEM_PYTHON_PREFIX}")
-message(STATUS "Python standard library: ${Python3_STDLIB_PATH}")
+message(STATUS "Python standard library: ${SYSTEM_STDLIB_PATH}")
 
 if(WIN32)
     set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe")
@@ -240,7 +260,6 @@ target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/generated/python_init
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${SQLite3_LIBRARY}
-    Python3::Python
     pybind11::embed)
 
 foreach(component IN LISTS QT_COMPONENTS)
@@ -260,6 +279,21 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 
 if(UNIX AND NOT APPLE)
     target_compile_definitions(${PROJECT_NAME} PRIVATE QT_QPA_PLATFORM=xcb)
+endif()
+
+add_custom_command(
+    TARGET ${PROJECT_NAME} PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${SYSTEM_STDLIB_PATH}/encodings"
+        "${PYTHON_VENV_DIR}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/encodings"
+    COMMENT "Copying encodings directory"
+)
+
+if(WIN32)
+    file(COPY
+        "${SYSTEM_STDLIB_PATH}/../python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}.zip"
+        DESTINATION "${PYTHON_VENV_DIR}/lib"
+    )
 endif()
 
 #-----------------------------------------------------------------------------
@@ -299,9 +333,6 @@ install(DIRECTORY ${PYTHON_VENV_DIR}
         PATTERN "*.egg-info" EXCLUDE)
 
 if(WIN32)
-    install(FILES ${Python3_LIBRARIES}
-            DESTINATION .
-            RENAME python3.dll)
     if(QT_PLATFORMS_DIR)
         install(DIRECTORY ${QT_PLATFORMS_DIR}/
                 DESTINATION platforms

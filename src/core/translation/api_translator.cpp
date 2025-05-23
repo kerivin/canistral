@@ -7,13 +7,11 @@
 
 namespace trnist::core::translation
 {
-    constexpr std::string_view MODULE_NAME{ "translators" };
-
     std::u16string ApiTranslator::translate(const std::u16string& text, const Context& context) const
     {
         try {
             const auto scope = python_guard_.acquire();
-            auto translators = py::module_::import(MODULE_NAME.data());
+            auto translators = py::module_::import("translators");
             py::object result = translators.attr("translate_text")(text, context.api, context.from_lang, context.to_lang);
             return result.cast<std::u16string>();
         } catch (const py::error_already_set& e) {
