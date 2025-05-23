@@ -254,6 +254,7 @@ target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/generated/python_init
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${SQLite3_LIBRARY}
+    ${Python3_LIBRARIES}
     pybind11::embed)
 
 foreach(component IN LISTS QT_COMPONENTS)
