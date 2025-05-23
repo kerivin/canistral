@@ -5,12 +5,6 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if(MSVC)
-    add_compile_options(/Zc:__cplusplus /permissive- /W3)
-else()
-    add_compile_options(-Wall -Wextra -fPIC)
-endif()
-
 enable_language(C)
 
 #-----------------------------------------------------------------------------
@@ -123,6 +117,7 @@ FetchContent_Declare(
   GIT_TAG v2.13.6
 )
 FetchContent_MakeAvailable(pybind11)
+add_subdirectory(${CMAKE_BINARY_DIR}/_deps/pybind11-src)
 
 #-----------------------------------------------------------------------------
 # Pandoc
@@ -230,6 +225,12 @@ foreach(component IN LISTS QT_COMPONENTS)
     target_link_libraries(${PROJECT_NAME} PRIVATE "Qt6::${component}")
 endforeach()
 
+if(MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE /Zc:__cplusplus /W4 /WX)
+else()
+    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -fPIC)
+endif()
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     QT_NO_KEYWORDS
     PYTHON_EXECUTABLE=${Python3_EXECUTABLE}
@@ -244,7 +245,7 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 
 get_target_property(Qt6_core_location Qt6::Core IMPORTED_LOCATION)
 if(Qt6_core_location)
-    get_filename_component(QT_LIB_DIR "${Qt6_core_location}" DIRECTORY)
+    get_filename_component(QT_BIN_DIR "${Qt6_core_location}" DIRECTORY)
     
     if(WIN32)
         set(PLATFORM_LIB qwindows.dll)
@@ -256,16 +257,18 @@ if(Qt6_core_location)
 
     find_path(QT_PLATFORMS_DIR
         NAMES ${PLATFORM_LIB}
-        PATHS "${QT_LIB_DIR}/../plugins/platforms" "/usr/lib/qt6/plugins/platforms" "/usr/lib/x86_64-linux-gnu/qt6/plugins/platforms"
-        NO_DEFAULT_PATH
+        PATHS "${QT_BIN_DIR}/../plugins/platforms" "/usr/lib/qt6/plugins/platforms" "/usr/lib/x86_64-linux-gnu/qt6/plugins/platforms"
     )
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/platforms/"
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "${QT_PLATFORMS_DIR}/${PLATFORM_LIB}"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/platforms/"
-    )
+    message(STATUS "Qt platforms directory: ${QT_PLATFORMS_DIR}")
+    if (QT_PLATFORMS_DIR)
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory
+                "$<TARGET_FILE_DIR:${PROJECT_NAME}>/platforms/"
+            COMMAND ${CMAKE_COMMAND} -E copy
+                "${QT_PLATFORMS_DIR}/${PLATFORM_LIB}"
+                "$<TARGET_FILE_DIR:${PROJECT_NAME}>/platforms/"
+        )
+    endif()
 endif()
 
 if(WIN32)

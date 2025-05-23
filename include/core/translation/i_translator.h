@@ -3,7 +3,7 @@
 
 namespace trnist::core::translation
 {
-	class Context;
+	struct Context;
 
 	class ITranslator
 	{

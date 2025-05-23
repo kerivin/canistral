@@ -74,6 +74,10 @@
         "iostream": "cpp",
         "ranges": "cpp",
         "typeindex": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "any": "cpp",
+        "bitset": "cpp",
+        "csignal": "cpp",
+        "regex": "cpp"
     }
 }
