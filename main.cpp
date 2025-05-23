@@ -7,7 +7,7 @@
 
 int main(int argc, char *argv[])
 {
-    qputenv("QT_QPA_PLATFORM", "xcb");
+    // qputenv("QT_QPA_PLATFORM", "xcb");
     QApplication app(argc, argv);
 
     QMainWindow mainWindow;
