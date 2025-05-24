@@ -46,6 +46,7 @@ int main(int argc, char *argv[])
 			{
 				prefix = sys.attr("prefix").cast<std::string>();
 				base_prefix = sys.attr("base_prefix").cast<std::string>();
+				QMessageBox::information(nullptr, "Prefixes", QString::fromStdString(base_prefix + " -vs- " + prefix));
 				in_venv = (prefix != base_prefix);
 			}
 
