@@ -96,8 +96,9 @@ if(NOT EXISTS "${PYTHON_VENV_DIR}/lib/python${Python3_VERSION_MAJOR}.${Python3_V
 endif()
 
 if(WIN32)
-    set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe")
-    set(Python3_INCLUDE_DIRS "${PYTHON_VENV_DIR}/include")
+    set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe" CACHE STRING "" FORCE)
+    set(Python_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe" CACHE STRING "" FORCE)
+    set(Python3_INCLUDE_DIRS "${PYTHON_VENV_DIR}/include" CACHE STRING "" FORCE)
     set(PYTHON_PIP "${PYTHON_VENV_DIR}/Scripts/pip.exe")
 
     execute_process(COMMAND ${PYTHON_VENV_DIR}/Scripts/activate.bat)
@@ -105,8 +106,9 @@ if(WIN32)
     set(PYTHON_RUNTIME_HOME "${CMAKE_INSTALL_PREFIX}/${PYTHON_VENV_NAME}")
     set(PYTHON_RUNTIME "${PYTHON_RUNTIME_HOME}/python.exe")
 else()
-    set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
-    set(Python3_INCLUDE_DIRS "${PYTHON_VENV_DIR}/include")
+    set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python" CACHE STRING "" FORCE)
+    set(Python_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python" CACHE STRING "" FORCE)
+    set(Python3_INCLUDE_DIRS "${PYTHON_VENV_DIR}/include" CACHE STRING "" FORCE)
     set(PYTHON_PIP "${PYTHON_VENV_DIR}/bin/pip")
 
     execute_process(COMMAND source ${PYTHON_VENV_DIR}/bin/activate)
@@ -125,11 +127,25 @@ if(IS_DIRECTORY "${Python3_LIBRARIES}")
     set(Python3_LIBRARIES "${Python3_LIBRARIES}/${PYTHON_LIB_NAME}" CACHE STRING "Python libraries" FORCE)
 endif()
 
+set(Python_ROOT_DIR "${CMAKE_BINARY_DIR}/${PYTHON_VENV_NAME}")
+set(Python_EXECUTABLE "${Python3_EXECUTABLE}")
+
+if(WIN32)
+  set(ENV{PATH} "${PYTHON_VENV_DIR}/Scripts;$ENV{PATH}")
+else()
+  set(ENV{PATH} "${PYTHON_VENV_DIR}/bin:$ENV{PATH}")
+endif()
+set(ENV{PYTHONHOME} "${PYTHON_VENV_DIR}")
+
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 
 message(STATUS "PYTHON_RUNTIME_HOME: ${PYTHON_RUNTIME_HOME}")
 message(STATUS "PYTHON_RUNTIME: ${PYTHON_RUNTIME}")
 message(STATUS "New Python3_EXECUTABLE: ${Python3_EXECUTABLE}")
+
+#-----------------------------------------------------------------------------
+# Python Packages
+#-----------------------------------------------------------------------------
 
 execute_process(COMMAND ${PYTHON_PIP} --version)
 set(PYTHON_PACKAGES
@@ -153,6 +169,9 @@ endforeach()
 #-----------------------------------------------------------------------------
 
 set(PYBIND11_FINDPYTHON ON)
+set(PYBIND11_NOPYTHON OFF)
+set(PYBIND11_PYTHON_VERSION ${Python3_VERSION})
+set(PYBIND11_DETAILED_MESSAGES ON)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -161,6 +180,12 @@ FetchContent_Declare(
   GIT_TAG v2.13.6
 )
 FetchContent_MakeAvailable(pybind11)
+
+execute_process(
+  COMMAND ${Python_EXECUTABLE} -c "import sys; print(sys.executable, sys.version, sys.prefix)"
+  OUTPUT_VARIABLE PYTHON_INFO
+)
+message(STATUS "Python Check:\n${PYTHON_INFO}")
 
 message(STATUS "PyBind11 Python interpreter: ${PYBIND11_PYTHON_INTERPRETER}")
 message(STATUS "PyBind11 include dir: ${pybind11_INCLUDE_DIR}")
