@@ -33,19 +33,6 @@ else()
     execute_process(COMMAND sudo ${APT_GET} install -y libgl1-mesa-dev qt6-base-dev qt6-declarative-dev)
     set(QT_DIR "/usr/lib/x86_64-linux-gnu/cmake/Qt6")
 endif()
+
 list(APPEND CMAKE_PREFIX_PATH ${QT_DIR})
 find_package(Qt6 REQUIRED COMPONENTS ${QT_COMPONENTS})
-
-message(STATUS "Qt6 libraries path: ${Qt6_DIR}")
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-    message(STATUS "Building for 64-bit")
-else()
-    message(STATUS "Building for 32-bit")
-endif()
-
-get_target_property(Qt6Core_location Qt6::Core LOCATION)
-execute_process(
-    COMMAND file "${Qt6Core_location}"
-    OUTPUT_VARIABLE file_output
-)
-message(STATUS "Qt6::Core architecture: ${file_output}")

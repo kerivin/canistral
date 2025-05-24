@@ -40,6 +40,17 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/py/
 		DESTINATION ${PYTHON_MODULES_DIR})
 
 if(WIN32)
+    get_filename_component(PYTHON_DIR ${Python3_EXECUTABLE} DIRECTORY)
+    find_file(PYTHON3_DLL
+        NAMES Python3.dll
+        PATHS ${PYTHON_DIR}
+        NO_DEFAULT_PATH
+        REQUIRED
+    )
+    install(FILES ${PYTHON3_DLL}
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
+    )
 	if(QT_PLATFORMS_DIR)
 		install(DIRECTORY ${QT_PLATFORMS_DIR}/
 				DESTINATION platforms
