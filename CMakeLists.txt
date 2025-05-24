@@ -75,12 +75,17 @@ else()
     set(VENV_PIP_EXECUTABLE "${PYTHON_VENV_DIR}/bin/pip")
 endif()
 
+message(STATUS "Venv: ${PYTHON_VENV_DIR}")
+message(STATUS "Venv Python init: ${VENV_PYTHON_EXECUTABLE}")
+
 execute_process(
   COMMAND ${Python3_EXECUTABLE} -c 
     "import os, sys; print(os.path.realpath(os.path.dirname(os.__file__)))"
   OUTPUT_VARIABLE SYSTEM_STDLIB_PATH
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+
+message(STATUS "Venv Python check 1: ${VENV_PYTHON_EXECUTABLE}")
 
 #-----------------------------------------------------------------------------
 # Python Packages
@@ -91,6 +96,8 @@ set(PYTHON_PACKAGES
     translators
     python-iso639
 )
+
+message(STATUS "Venv Python check 2: ${VENV_PYTHON_EXECUTABLE}")
 
 foreach(pkg IN LISTS PYTHON_PACKAGES)
     execute_process(
@@ -103,6 +110,8 @@ foreach(pkg IN LISTS PYTHON_PACKAGES)
     endif()
 endforeach()
 
+message(STATUS "Venv Python check 3: ${VENV_PYTHON_EXECUTABLE}")
+
 #-----------------------------------------------------------------------------
 # PyBind11
 #-----------------------------------------------------------------------------
@@ -111,6 +120,8 @@ unset(Python3_EXECUTABLE CACHE)
 unset(Python3_INCLUDE_DIRS CACHE)
 unset(Python3_LIBRARIES CACHE)
 unset(Python3_FOUND CACHE)
+
+message(STATUS "Venv Python check 4: ${VENV_PYTHON_EXECUTABLE}")
 
 set(Python3_EXECUTABLE ${VENV_PYTHON_EXECUTABLE} CACHE STRING "" FORCE)
 message(STATUS "Venv Python: ${Python3_EXECUTABLE}")
@@ -129,7 +140,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(pybind11)
 
-set(pybind11_PYTHON_INTERPRETER ${Python3_EXECUTABLE} CACHE STRING "" FORCE)
+set(pybind11_PYTHON_INTERPRETER ${VENV_PYTHON_EXECUTABLE} CACHE STRING "" FORCE)
 message(STATUS "pybind11 using Python: ${pybind11_PYTHON_INTERPRETER}")
 
 #-----------------------------------------------------------------------------
@@ -256,7 +267,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE -fvisibility=hidden)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     QT_NO_KEYWORDS
-    PYTHON_EXECUTABLE=${Python3_EXECUTABLE}
+    PYTHON_EXECUTABLE=${VENV_PYTHON_EXECUTABLE}
     PYTHONHOME="${PYTHON_VENV_DIR}"
 )
 
