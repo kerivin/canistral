@@ -144,6 +144,10 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(pybind11)
 
+message(STATUS "PyBind11 Python interpreter: ${PYBIND11_PYTHON_INTERPRETER}")
+message(STATUS "PyBind11 include dir: ${pybind11_INCLUDE_DIR}")
+message(STATUS "PyBind11 Python libs: ${pybind11_LIBRARIES}")
+
 #-----------------------------------------------------------------------------
 # Pandoc
 #-----------------------------------------------------------------------------
@@ -272,6 +276,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE -fvisibility=hidden)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     QT_NO_KEYWORDS
     PYTHON_EXECUTABLE=${Python3_EXECUTABLE}
+    PYTHONHOME="${Python3_EXECUTABLE_DIR}"
 )
 
 if(UNIX AND NOT APPLE)
