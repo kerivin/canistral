@@ -152,6 +152,8 @@ endforeach()
 # PyBind11
 #-----------------------------------------------------------------------------
 
+set(PYBIND11_FINDPYTHON ON)
+
 include(FetchContent)
 FetchContent_Declare(
   pybind11
