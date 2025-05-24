@@ -38,7 +38,11 @@ int main(int argc, char *argv[])
             QMessageBox::information(nullptr, "Python version", QString::fromStdString(sys.attr("version").cast<std::string>()));
 
             trnist::py::module_ site = trnist::py::module_::import("site");
-            site.attr("getsitepackages")();
+            const auto site_list = site.attr("getsitepackages")().cast<trnist::py::list>();
+            QString qsite;
+            for (const auto& site : site_list)
+                qsite.append(QString::fromStdString(site.cast<std::string>()) + "\n");
+            QMessageBox::information(nullptr, "Python site-packages", qsite);
 
             const auto path_list = sys.attr("path").cast<trnist::py::list>();
             QString qpath;
