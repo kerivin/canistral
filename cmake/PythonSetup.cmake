@@ -27,24 +27,12 @@ else()
 endif()
 
 #-----------------------------------------------------------------------------
-# Python Packages
+# Pip Packages
 #-----------------------------------------------------------------------------
 
-set(PYTHON_MODULES
-    translators
-    python-iso639
+execute_process(
+    COMMAND ${VENV_PIP_EXECUTABLE} install translators python-iso639 "PyQt6==${Qt6_VERSION}" "PyQt6-Qt6==${Qt6_VERSION}"
 )
-
-foreach(pkg IN LISTS PYTHON_MODULES)
-    execute_process(
-        COMMAND ${VENV_PIP_EXECUTABLE} install ${pkg}
-        RESULT_VARIABLE pkg_result
-        ERROR_VARIABLE pkg_error
-    )
-    if(NOT pkg_result EQUAL 0)
-        message(WARNING "Failed to install ${pkg}:\n${pkg_error}")
-    endif()
-endforeach()
 
 #-----------------------------------------------------------------------------
 # PyBind11

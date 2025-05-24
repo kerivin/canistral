@@ -1,10 +1,10 @@
+#include <filesystem>
 #include <QApplication>
 #include <QMainWindow>
 #include <QMessageBox>
-#include <sqlite3.h>
 #include "core/translation/api_translator.h"
 #include "core/translation/context.h"
-#include <filesystem>
+#include "pybind.h"
 
 // PyStatus initialize_embedded_python();
 // void finalize_embedded_python();
@@ -29,25 +29,23 @@ int main(int argc, char *argv[])
 		try
 		{
 			py::module_ sys = py::module_::import("sys");
-
 			fs::path exe_dir = fs::path(argv[0]).parent_path();
 			fs::path py_modules_path = exe_dir / "python_modules";
 			py::module_::import("sys").attr("path").attr("append")(py_modules_path.string());
 
-			QMessageBox::information(nullptr, "Python version", QString::fromStdString(sys.attr("version").cast<std::string>()));
+			py::exec(R"(
+				import qt_exejs
+				import exejs
 
-			trnist::py::module_ site = trnist::py::module_::import("site");
-			const auto site_list = site.attr("getsitepackages")().cast<trnist::py::list>();
-			QString qsite;
-			for (const auto &site : site_list)
-				qsite.append(QString::fromStdString(site.cast<std::string>()) + "\n");
-			QMessageBox::information(nullptr, "Python site-packages", qsite);
+				exejs.runtime = qt_exejs.runtime
+				exejs.compile = qt_exejs.compile
+				exejs.execute = qt_exejs.execute
+				exejs.evaluate = qt_exejs.evaluate
+				exejs.Tse = qt_exejs.Tse
+				exejs.tse = qt_exejs.tse
 
-			const auto path_list = sys.attr("path").cast<trnist::py::list>();
-			QString qpath;
-			for (const auto &path : path_list)
-				qpath.append(QString::fromStdString(path.cast<std::string>()) + "\n");
-			QMessageBox::information(nullptr, "Python path", qpath);
+				print(f"exejs runtime is now: {exejs.runtime.name}")
+			)");
 		}
 		catch (const std::exception &e)
 		{
@@ -55,15 +53,8 @@ int main(int argc, char *argv[])
 		}
 
 		QMainWindow mainWindow;
-		mainWindow.setWindowTitle("tr-nist");
 		mainWindow.resize(800, 600);
 		mainWindow.show();
-
-		sqlite3 *db;
-		if (sqlite3_open(":memory:", &db) == SQLITE_OK)
-		{
-			sqlite3_close(db);
-		}
 
 		try
 		{
