@@ -97,19 +97,35 @@ endif()
 
 if(WIN32)
     set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe")
+    set(Python3_INCLUDE_DIRS "${PYTHON_VENV_DIR}/include")
     set(PYTHON_PIP "${PYTHON_VENV_DIR}/Scripts/pip.exe")
-    execute_process(COMMAND ${PYTHON_VENV_DIR}/Scripts/Activate.ps1)
+
+    execute_process(COMMAND ${PYTHON_VENV_DIR}/Scripts/activate.bat)
 
     set(PYTHON_RUNTIME_HOME "${CMAKE_INSTALL_PREFIX}/${PYTHON_VENV_NAME}")
     set(PYTHON_RUNTIME "${PYTHON_RUNTIME_HOME}/python.exe")
 else()
     set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
+    set(Python3_INCLUDE_DIRS "${PYTHON_VENV_DIR}/include")
     set(PYTHON_PIP "${PYTHON_VENV_DIR}/bin/pip")
+
     execute_process(COMMAND source ${PYTHON_VENV_DIR}/bin/activate)
 
     set(PYTHON_RUNTIME_HOME "${CMAKE_INSTALL_PREFIX}/${PYTHON_VENV_NAME}")
     set(PYTHON_RUNTIME "${PYTHON_RUNTIME_HOME}/python")
 endif()
+
+if(IS_DIRECTORY "${Python3_LIBRARIES}")
+    if(WIN32)
+        set(PYTHON_LIB_NAME "python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}.lib")
+    else()
+        set(PYTHON_LIB_NAME "libpython${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+    endif()
+    
+    set(Python3_LIBRARIES "${Python3_LIBRARIES}/${PYTHON_LIB_NAME}" CACHE STRING "Python libraries" FORCE)
+endif()
+
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 
 message(STATUS "PYTHON_RUNTIME_HOME: ${PYTHON_RUNTIME_HOME}")
 message(STATUS "PYTHON_RUNTIME: ${PYTHON_RUNTIME}")
