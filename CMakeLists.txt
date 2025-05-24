@@ -64,8 +64,6 @@ set(PYTHON_VENV_NAME python_venv)
 set(PYTHON_VENV_DIR "${CMAKE_BINARY_DIR}/${PYTHON_VENV_NAME}")
 file(MAKE_DIRECTORY ${PYTHON_VENV_DIR})
 
-message(STATUS "Original Python: ${Python3_EXECUTABLE}")
-
 # Create virtual environment
 execute_process(COMMAND ${Python3_EXECUTABLE} -m venv "${PYTHON_VENV_DIR}")
 
@@ -77,27 +75,12 @@ else()
     set(VENV_PIP_EXECUTABLE "${PYTHON_VENV_DIR}/bin/pip")
 endif()
 
-unset(Python3_EXECUTABLE CACHE)
-unset(Python3_INCLUDE_DIRS CACHE)
-unset(Python3_LIBRARIES CACHE)
-unset(Python3_FOUND CACHE)
-
 execute_process(
   COMMAND ${Python3_EXECUTABLE} -c 
     "import os, sys; print(os.path.realpath(os.path.dirname(os.__file__)))"
   OUTPUT_VARIABLE SYSTEM_STDLIB_PATH
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-
-set(Python3_EXECUTABLE ${VENV_PYTHON_EXECUTABLE} CACHE STRING "" FORCE)
-find_package(Python3 3.11 REQUIRED COMPONENTS Interpreter Development)
-
-execute_process(
-    COMMAND ${Python3_EXECUTABLE} -c "import sys; print(sys.prefix)"
-    OUTPUT_VARIABLE PYTHON_PREFIX
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-message(STATUS "Using Python from: ${PYTHON_PREFIX}")
 
 #-----------------------------------------------------------------------------
 # Python Packages
@@ -124,6 +107,16 @@ endforeach()
 # PyBind11
 #-----------------------------------------------------------------------------
 
+unset(Python3_EXECUTABLE CACHE)
+unset(Python3_INCLUDE_DIRS CACHE)
+unset(Python3_LIBRARIES CACHE)
+unset(Python3_FOUND CACHE)
+
+set(Python3_EXECUTABLE ${VENV_PYTHON_EXECUTABLE} CACHE STRING "" FORCE)
+message(STATUS "Venv Python: ${Python3_EXECUTABLE}")
+find_package(Python3 3.11 REQUIRED COMPONENTS Interpreter Development)
+message(STATUS "Package Python: ${Python3_EXECUTABLE}")
+
 set(PYBIND11_PYTHON_VERSION "${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}")
 set(PYBIND11_FINDPYTHON ON)
 set(PYBIND11_NOPYTHON OFF)
@@ -136,9 +129,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(pybind11)
 
-if(NOT pybind11_PYTHON_INTERPRETER)
-    set(pybind11_PYTHON_INTERPRETER ${Python3_EXECUTABLE} CACHE STRING "" FORCE)
-endif()
+set(pybind11_PYTHON_INTERPRETER ${Python3_EXECUTABLE} CACHE STRING "" FORCE)
 message(STATUS "pybind11 using Python: ${pybind11_PYTHON_INTERPRETER}")
 
 #-----------------------------------------------------------------------------
