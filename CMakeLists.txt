@@ -265,7 +265,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE -fvisibility=hidden)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     QT_NO_KEYWORDS
-    Python3_EXECUTABLE=${Python3_EXECUTABLE}
+    PYTHON_EXECUTABLE=${Python3_EXECUTABLE}
     PYTHONHOME="${PYTHON_VENV_DIR}"
 )
 
