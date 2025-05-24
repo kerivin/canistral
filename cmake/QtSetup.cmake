@@ -6,7 +6,7 @@ if(NOT DEFINED QT_FORCE_INSTALL)
     set(QT_FORCE_INSTALL OFF CACHE BOOL "Force Qt6 installation even if found")
 endif()
 
-set(QT_COMPONENTS Core Gui Widgets Sql)
+set(QT_COMPONENTS Core Gui Widgets Sql Qml)
 
 find_package(Qt6 QUIET COMPONENTS ${QT_COMPONENTS})
 
