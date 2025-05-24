@@ -38,13 +38,13 @@ jobs:
     - name: Package tar.gz
       run: |
         cd bin
-        tar czf ../${{ env.PROJECT_NAME }}-linux.tar.gz .
+        tar czf ../${{ needs.get-project-name.outputs.project_name }}-linux.tar.gz .
       
     - name: Upload .tar.gz
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.PROJECT_NAME }}-linux.tar.gz
-        path: ${{ env.PROJECT_NAME }}-linux.tar.gz
+        name: ${{ needs.get-project-name.outputs.project_name }}-linux.tar.gz
+        path: ${{ needs.get-project-name.outputs.project_name }}-linux.tar.gz
 
   macOS:
     needs: get-project-name
@@ -70,28 +70,28 @@ jobs:
       run: |
         cd bin
         hdiutil create \
-          -volname "${{ env.PROJECT_NAME }}" \
+          -volname "${{ needs.get-project-name.outputs.project_name }}" \
           -srcfolder . \
           -ov \
           -format UDZO \
-          ../${{ env.PROJECT_NAME }}-macOS.dmg
+          ../${{ needs.get-project-name.outputs.project_name }}-macOS.dmg
 
     - name: Package tar.gz
       run: |
         cd bin
-        tar czf ../${{ env.PROJECT_NAME }}-macOS.tar.gz .
+        tar czf ../${{ needs.get-project-name.outputs.project_name }}-macOS.tar.gz .
 
     - name: Upload .dmg
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.PROJECT_NAME }}-macOS.dmg
-        path: ${{ env.PROJECT_NAME }}-macOS.dmg
+        name: ${{ needs.get-project-name.outputs.project_name }}-macOS.dmg
+        path: ${{ needs.get-project-name.outputs.project_name }}-macOS.dmg
 
     - name: Upload .tar.gz
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.PROJECT_NAME }}-macOS.tar.gz
-        path: ${{ env.PROJECT_NAME }}-macOS.tar.gz
+        name: ${{ needs.get-project-name.outputs.project_name }}-macOS.tar.gz
+        path: ${{ needs.get-project-name.outputs.project_name }}-macOS.tar.gz
 
   windows:
     needs: get-project-name
@@ -135,10 +135,10 @@ jobs:
     - name: Package zip
       run: |
         cd bin
-        7z a -tzip ../${{ env.PROJECT_NAME }}-windows.zip *
+        7z a -tzip ../${{ needs.get-project-name.outputs.project_name }}-windows.zip *
       
     - name: Upload zip
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ env.PROJECT_NAME }}-windows.zip
-        path: ${{ env.PROJECT_NAME }}-windows.zip
+        name: ${{ needs.get-project-name.outputs.project_name }}-windows.zip
+        path: ${{ needs.get-project-name.outputs.project_name }}-windows.zip
