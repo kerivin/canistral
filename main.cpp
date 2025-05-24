@@ -24,20 +24,10 @@ int main(int argc, char *argv[])
 	// }
 	// else
 	{
-		QMainWindow mainWindow;
-		mainWindow.setWindowTitle("tr-nist");
-		mainWindow.resize(800, 600);
-		mainWindow.show();
-
-		sqlite3 *db;
-		if (sqlite3_open(":memory:", &db) == SQLITE_OK)
-		{
-			sqlite3_close(db);
-		}
+		trnist::py::scoped_interpreter guard{};
 
 		try
 		{
-			trnist::py::scoped_interpreter guard{};
 			py::module_ sys = py::module_::import("sys");
 
 			fs::path exe_dir = fs::path(argv[0]).parent_path();
@@ -62,6 +52,17 @@ int main(int argc, char *argv[])
 		catch (const std::exception &e)
 		{
 			QMessageBox::critical(nullptr, "Error", e.what());
+		}
+
+		QMainWindow mainWindow;
+		mainWindow.setWindowTitle("tr-nist");
+		mainWindow.resize(800, 600);
+		mainWindow.show();
+
+		sqlite3 *db;
+		if (sqlite3_open(":memory:", &db) == SQLITE_OK)
+		{
+			sqlite3_close(db);
 		}
 
 		try

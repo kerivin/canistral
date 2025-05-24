@@ -10,6 +10,6 @@ namespace trnist::core::translation
 		std::u16string translate(const std::u16string&, const Context&) const override;
 
 	private:
-		PythonGuard python_guard_;
+		// PythonGuard python_guard_;
 	};
 }
