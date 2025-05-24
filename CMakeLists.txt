@@ -109,6 +109,18 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(pybind11)
 
 #-----------------------------------------------------------------------------
+# NodeJS
+#-----------------------------------------------------------------------------
+
+if(WIN32)
+    execute_process(COMMAND ${CHOCO} install nodejs -y --no-progress)
+elseif(APPLE)
+    execute_process(COMMAND ${BREW} install node)
+else()
+    execute_process(COMMAND sudo ${APT_GET} install -y nodejs)
+endif()
+
+#-----------------------------------------------------------------------------
 # Pandoc
 #-----------------------------------------------------------------------------
 
