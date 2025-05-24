@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 project(tr-nist LANGUAGES CXX)
+
 set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/bin" CACHE PATH "Installation directory")
 message(STATUS "Installation folder: ${CMAKE_INSTALL_PREFIX}")
 
@@ -16,7 +17,7 @@ enable_language(C)
 set(MISSING_MESSAGE "is required for dependency installation")
 
 if(WIN32)
-    # Windows - chocolatey
+    # Windows - choco
     find_program(CHOCO choco.exe)
     if(NOT CHOCO)
         message(STATUS "Installing Chocolatey...")
@@ -28,11 +29,7 @@ if(WIN32)
         )
         set(ENV{PATH} "$ENV{ALLUSERSPROFILE}\\chocolatey\\bin;$ENV{PATH}")
         unset(CHOCO CACHE)
-        find_program(CHOCO choco REQUIRED)
-    endif()
-    find_program(CHOCO choco.exe)
-    if(NOT CHOCO)
-        message(FATAL_ERROR "chocolatey ${MISSING_MESSAGE}")
+        find_program(CHOCO choco.exe REQUIRED)
     endif()
 elseif(APPLE)
     # macOS - brew
@@ -67,13 +64,23 @@ set(PYTHON_VENV_NAME python_venv)
 set(PYTHON_VENV_DIR "${CMAKE_BINARY_DIR}/${PYTHON_VENV_NAME}")
 file(MAKE_DIRECTORY ${PYTHON_VENV_DIR})
 
-execute_process(
-    COMMAND ${Python3_EXECUTABLE} -m venv "${PYTHON_VENV_DIR}"
-    RESULT_VARIABLE venv_result
-)
-if(NOT venv_result EQUAL 0)
-    message(FATAL_ERROR "Failed to create Python virtual environment")
+message(STATUS "Original Python: ${Python3_EXECUTABLE}")
+
+# Create virtual environment
+execute_process(COMMAND ${Python3_EXECUTABLE} -m venv "${PYTHON_VENV_DIR}")
+
+if(WIN32)
+    set(VENV_PYTHON_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe")
+    set(VENV_PIP_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/pip.exe")
+else()
+    set(VENV_PYTHON_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
+    set(VENV_PIP_EXECUTABLE "${PYTHON_VENV_DIR}/bin/pip")
 endif()
+
+unset(Python3_EXECUTABLE CACHE)
+unset(Python3_INCLUDE_DIRS CACHE)
+unset(Python3_LIBRARIES CACHE)
+unset(Python3_FOUND CACHE)
 
 execute_process(
   COMMAND ${Python3_EXECUTABLE} -c 
@@ -81,73 +88,22 @@ execute_process(
   OUTPUT_VARIABLE SYSTEM_STDLIB_PATH
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-if(NOT SYSTEM_STDLIB_PATH)
-  message(FATAL_ERROR "Failed to detect Python standard library path!")
-else()
-  message(STATUS "Found Python stdlib at: ${SYSTEM_STDLIB_PATH}")
-endif()
 
-if(NOT EXISTS "${PYTHON_VENV_DIR}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/encodings")
-    execute_process(
-        COMMAND ${Python3_EXECUTABLE} -c "import os; print(os.path.dirname(os.__file__))"
-        OUTPUT_VARIABLE SYSTEM_STDLIB_PATH
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-endif()
+set(Python3_EXECUTABLE ${VENV_PYTHON_EXECUTABLE} CACHE STRING "" FORCE)
+find_package(Python3 3.11 REQUIRED COMPONENTS Interpreter Development)
 
-if(WIN32)
-    set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe" CACHE STRING "" FORCE)
-    set(Python_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe" CACHE STRING "" FORCE)
-    set(Python3_INCLUDE_DIRS "${PYTHON_VENV_DIR}/include" CACHE STRING "" FORCE)
-    set(PYTHON_PIP "${PYTHON_VENV_DIR}/Scripts/pip.exe")
-
-    execute_process(COMMAND ${PYTHON_VENV_DIR}/Scripts/activate.bat)
-
-    set(PYTHON_RUNTIME_HOME "${CMAKE_INSTALL_PREFIX}/${PYTHON_VENV_NAME}")
-    set(PYTHON_RUNTIME "${PYTHON_RUNTIME_HOME}/python.exe")
-else()
-    set(Python3_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python" CACHE STRING "" FORCE)
-    set(Python_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python" CACHE STRING "" FORCE)
-    set(Python3_INCLUDE_DIRS "${PYTHON_VENV_DIR}/include" CACHE STRING "" FORCE)
-    set(PYTHON_PIP "${PYTHON_VENV_DIR}/bin/pip")
-
-    execute_process(COMMAND source ${PYTHON_VENV_DIR}/bin/activate)
-
-    set(PYTHON_RUNTIME_HOME "${CMAKE_INSTALL_PREFIX}/${PYTHON_VENV_NAME}")
-    set(PYTHON_RUNTIME "${PYTHON_RUNTIME_HOME}/python")
-endif()
-
-if(IS_DIRECTORY "${Python3_LIBRARIES}")
-    if(WIN32)
-        set(PYTHON_LIB_NAME "python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}.lib")
-    else()
-        set(PYTHON_LIB_NAME "libpython${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-    endif()
-    
-    set(Python3_LIBRARIES "${Python3_LIBRARIES}/${PYTHON_LIB_NAME}" CACHE STRING "Python libraries" FORCE)
-endif()
-
-set(Python_ROOT_DIR "${CMAKE_BINARY_DIR}/${PYTHON_VENV_NAME}")
-set(Python_EXECUTABLE "${Python3_EXECUTABLE}")
-
-if(WIN32)
-  set(ENV{PATH} "${PYTHON_VENV_DIR}/Scripts;$ENV{PATH}")
-else()
-  set(ENV{PATH} "${PYTHON_VENV_DIR}/bin:$ENV{PATH}")
-endif()
-set(ENV{PYTHONHOME} "${PYTHON_VENV_DIR}")
-
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
-
-message(STATUS "PYTHON_RUNTIME_HOME: ${PYTHON_RUNTIME_HOME}")
-message(STATUS "PYTHON_RUNTIME: ${PYTHON_RUNTIME}")
-message(STATUS "New Python3_EXECUTABLE: ${Python3_EXECUTABLE}")
+execute_process(
+    COMMAND ${Python3_EXECUTABLE} -c "import sys; print(sys.prefix)"
+    OUTPUT_VARIABLE PYTHON_PREFIX
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+message(STATUS "Using Python from: ${PYTHON_PREFIX}")
 
 #-----------------------------------------------------------------------------
 # Python Packages
 #-----------------------------------------------------------------------------
 
-execute_process(COMMAND ${PYTHON_PIP} --version)
+execute_process(COMMAND ${VENV_PIP_EXECUTABLE} --version)
 set(PYTHON_PACKAGES
     translators
     python-iso639
@@ -155,7 +111,7 @@ set(PYTHON_PACKAGES
 
 foreach(pkg IN LISTS PYTHON_PACKAGES)
     execute_process(
-        COMMAND ${PYTHON_PIP} install ${pkg}
+        COMMAND ${VENV_PIP_EXECUTABLE} install ${pkg}
         RESULT_VARIABLE pkg_result
         ERROR_VARIABLE pkg_error
     )
@@ -168,10 +124,9 @@ endforeach()
 # PyBind11
 #-----------------------------------------------------------------------------
 
+set(PYBIND11_PYTHON_VERSION "${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}")
 set(PYBIND11_FINDPYTHON ON)
 set(PYBIND11_NOPYTHON OFF)
-set(PYBIND11_PYTHON_VERSION ${Python3_VERSION})
-set(PYBIND11_DETAILED_MESSAGES ON)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -181,15 +136,10 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(pybind11)
 
-execute_process(
-  COMMAND ${Python_EXECUTABLE} -c "import sys; print(sys.executable, sys.version, sys.prefix)"
-  OUTPUT_VARIABLE PYTHON_INFO
-)
-message(STATUS "Python Check:\n${PYTHON_INFO}")
-
-message(STATUS "PyBind11 Python interpreter: ${PYBIND11_PYTHON_INTERPRETER}")
-message(STATUS "PyBind11 include dir: ${pybind11_INCLUDE_DIR}")
-message(STATUS "PyBind11 Python libs: ${pybind11_LIBRARIES}")
+if(NOT pybind11_PYTHON_INTERPRETER)
+    set(pybind11_PYTHON_INTERPRETER ${Python3_EXECUTABLE} CACHE STRING "" FORCE)
+endif()
+message(STATUS "pybind11 using Python: ${pybind11_PYTHON_INTERPRETER}")
 
 #-----------------------------------------------------------------------------
 # Pandoc
@@ -231,7 +181,6 @@ if(NOT Qt6_FOUND OR QT_FORCE_INSTALL)
             NAMES Qt6Config.cmake
             PATHS ${QT_PATHS}
             REQUIRED
-            DOC "Path to Qt6 cmake configuration"
         )
     elseif(APPLE)
         execute_process(COMMAND ${BREW} install qt@6)
@@ -249,12 +198,6 @@ if(NOT Qt6_FOUND OR QT_FORCE_INSTALL)
     find_package(Qt6 REQUIRED COMPONENTS ${QT_COMPONENTS})
 endif()
 
-foreach(component IN LISTS QT_COMPONENTS)
-    if(NOT TARGET Qt6::${component})
-        message(FATAL_ERROR "Qt6 component ${component} not found. Check your Qt installation.")
-    endif()
-endforeach()
-
 #-----------------------------------------------------------------------------
 # SQLite3
 #-----------------------------------------------------------------------------
@@ -269,6 +212,9 @@ target_include_directories(${SQLite3_LIBRARY} PUBLIC ${SQLite3_INCLUDE_DIR})
 #-----------------------------------------------------------------------------
 # PRE-BUILD GENERATE FILES
 #-----------------------------------------------------------------------------
+
+set(PYTHON_RUNTIME_HOME ${PYTHONHOME})
+set(PYTHON_RUNTIME ${})
 
 configure_file(
     ${CMAKE_SOURCE_DIR}/src/python_init.cpp.in
@@ -302,7 +248,8 @@ target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/generated/python_init
 target_link_libraries(${PROJECT_NAME} PRIVATE
     ${SQLite3_LIBRARY}
     ${Python3_LIBRARIES}
-    pybind11::embed)
+    pybind11::embed
+)
 
 foreach(component IN LISTS QT_COMPONENTS)
     target_link_libraries(${PROJECT_NAME} PRIVATE "Qt6::${component}")
@@ -318,8 +265,8 @@ target_compile_options(${PROJECT_NAME} PRIVATE -fvisibility=hidden)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     QT_NO_KEYWORDS
-    PYTHON_EXECUTABLE=${Python3_EXECUTABLE}
-    PYTHONHOME="${Python3_EXECUTABLE_DIR}"
+    Python3_EXECUTABLE=${Python3_EXECUTABLE}
+    PYTHONHOME="${PYTHON_VENV_DIR}"
 )
 
 if(UNIX AND NOT APPLE)
@@ -361,7 +308,6 @@ if(Qt6_core_location)
         NAMES ${PLATFORM_LIB}
         PATHS "${QT_BIN_DIR}/../plugins/platforms" "/usr/lib/qt6/plugins/platforms" "/usr/lib/x86_64-linux-gnu/qt6/plugins/platforms"
     )
-    message(STATUS "Qt platforms directory: ${QT_PLATFORMS_DIR}")
 endif()
 
 install(TARGETS ${PROJECT_NAME}
