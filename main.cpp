@@ -39,39 +39,7 @@ int main(int argc, char *argv[])
 		{
 			trnist::py::scoped_interpreter guard{};
 			py::module_ sys = py::module_::import("sys");
-
-			bool in_venv = false;
-			std::string prefix, base_prefix;
-			if (py::hasattr(sys, "base_prefix"))
-			{
-				prefix = sys.attr("prefix").cast<std::string>();
-				base_prefix = sys.attr("base_prefix").cast<std::string>();
-				QMessageBox::information(nullptr, "Prefixes", QString::fromStdString(base_prefix + " -vs- " + prefix));
-				in_venv = (prefix != base_prefix);
-			}
-
-			if (in_venv)
-			{
-				const fs::path venv_root(prefix);
-				const std::vector<fs::path> possible_paths = {
-					venv_root / "Lib" / "site-packages",               // Windows
-					venv_root / "lib" / "site-packages",               // Unix
-					venv_root / "lib" / "python3" / "site-packages",   // Unix alternative
-					venv_root / "lib" / "python3.13" / "site-packages" // Specific version
-				};
-
-				for (const auto &path : possible_paths)
-				{
-					if (fs::exists(path))
-					{
-						sys.attr("path").attr("append")(path.string());
-					}
-				}
-			}
-
-			const fs::path exe_path = fs::absolute(argv[0]);
-			const fs::path exe_dir = exe_path.parent_path();
-			sys.attr("path").attr("append")(exe_dir.string());
+			py::module_::import("sys").attr("path").attr("append")("./python_modules");
 
 			QMessageBox::information(nullptr, "Python version", QString::fromStdString(sys.attr("version").cast<std::string>()));
 

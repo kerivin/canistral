@@ -64,42 +64,26 @@ set(PYTHON_VENV_NAME python_venv)
 set(PYTHON_VENV_DIR "${CMAKE_BINARY_DIR}/${PYTHON_VENV_NAME}")
 file(MAKE_DIRECTORY ${PYTHON_VENV_DIR})
 
-# Create virtual environment
 execute_process(COMMAND ${Python3_EXECUTABLE} -m venv "${PYTHON_VENV_DIR}")
 
 if(WIN32)
-    set(VENV_PYTHON_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/python.exe")
     set(VENV_PIP_EXECUTABLE "${PYTHON_VENV_DIR}/Scripts/pip.exe")
+    set(VENV_SITE_PACKAGES "${PYTHON_VENV_DIR}/Lib/site-packages")
 else()
-    set(VENV_PYTHON_EXECUTABLE "${PYTHON_VENV_DIR}/bin/python")
     set(VENV_PIP_EXECUTABLE "${PYTHON_VENV_DIR}/bin/pip")
+    set(VENV_SITE_PACKAGES "${PYTHON_VENV_DIR}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/site-packages")
 endif()
-
-message(STATUS "Venv: ${PYTHON_VENV_DIR}")
-message(STATUS "Venv Python init: ${VENV_PYTHON_EXECUTABLE}")
-
-execute_process(
-  COMMAND ${Python3_EXECUTABLE} -c 
-    "import os, sys; print(os.path.realpath(os.path.dirname(os.__file__)))"
-  OUTPUT_VARIABLE SYSTEM_STDLIB_PATH
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-message(STATUS "Venv Python check 1: ${VENV_PYTHON_EXECUTABLE}")
 
 #-----------------------------------------------------------------------------
 # Python Packages
 #-----------------------------------------------------------------------------
 
-execute_process(COMMAND ${VENV_PIP_EXECUTABLE} --version)
-set(PYTHON_PACKAGES
+set(PYTHON_MODULES
     translators
     python-iso639
 )
 
-message(STATUS "Venv Python check 2: ${VENV_PYTHON_EXECUTABLE}")
-
-foreach(pkg IN LISTS PYTHON_PACKAGES)
+foreach(pkg IN LISTS PYTHON_MODULES)
     execute_process(
         COMMAND ${VENV_PIP_EXECUTABLE} install ${pkg}
         RESULT_VARIABLE pkg_result
@@ -110,27 +94,11 @@ foreach(pkg IN LISTS PYTHON_PACKAGES)
     endif()
 endforeach()
 
-message(STATUS "Venv Python check 3: ${VENV_PYTHON_EXECUTABLE}")
-
 #-----------------------------------------------------------------------------
 # PyBind11
 #-----------------------------------------------------------------------------
 
-unset(Python3_EXECUTABLE CACHE)
-unset(Python3_INCLUDE_DIRS CACHE)
-unset(Python3_LIBRARIES CACHE)
-unset(Python3_FOUND CACHE)
-
-message(STATUS "Venv Python check 4: ${VENV_PYTHON_EXECUTABLE}")
-
-set(Python3_EXECUTABLE ${VENV_PYTHON_EXECUTABLE} CACHE STRING "" FORCE)
-message(STATUS "Venv Python: ${Python3_EXECUTABLE}")
-find_package(Python3 3.11 REQUIRED COMPONENTS Interpreter Development)
-message(STATUS "Package Python: ${Python3_EXECUTABLE}")
-
-set(PYBIND11_PYTHON_VERSION "${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}")
 set(PYBIND11_FINDPYTHON ON)
-set(PYBIND11_NOPYTHON OFF)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -139,9 +107,6 @@ FetchContent_Declare(
   GIT_TAG v2.13.6
 )
 FetchContent_MakeAvailable(pybind11)
-
-set(pybind11_PYTHON_INTERPRETER ${VENV_PYTHON_EXECUTABLE} CACHE STRING "" FORCE)
-message(STATUS "pybind11 using Python: ${pybind11_PYTHON_INTERPRETER}")
 
 #-----------------------------------------------------------------------------
 # Pandoc
@@ -267,32 +232,17 @@ target_compile_options(${PROJECT_NAME} PRIVATE -fvisibility=hidden)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     QT_NO_KEYWORDS
-    PYTHON_EXECUTABLE=${VENV_PYTHON_EXECUTABLE}
-    PYTHONHOME="${PYTHON_VENV_DIR}"
 )
 
 if(UNIX AND NOT APPLE)
     target_compile_definitions(${PROJECT_NAME} PRIVATE QT_QPA_PLATFORM=xcb)
 endif()
 
-add_custom_command(
-    TARGET ${PROJECT_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${SYSTEM_STDLIB_PATH}/encodings"
-        "${PYTHON_VENV_DIR}/lib/python${Python3_VERSION_MAJOR}.${Python3_VERSION_MINOR}/encodings"
-    COMMENT "Copying encodings directory"
-)
-
-if(WIN32 AND Python3_VERSION VERSION_LESS "3.13")
-    file(COPY
-        "${SYSTEM_STDLIB_PATH}/../python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}.zip"
-        DESTINATION "${PYTHON_VENV_DIR}/lib"
-    )
-endif()
-
 #-----------------------------------------------------------------------------
 # INSTALL
 #-----------------------------------------------------------------------------
+
+set(PYTHON_MODULES_DIR "python_modules")
 
 get_target_property(Qt6_core_location Qt6::Core IMPORTED_LOCATION)
 if(Qt6_core_location)
@@ -318,12 +268,13 @@ install(TARGETS ${PROJECT_NAME}
         LIBRARY DESTINATION .
         ARCHIVE DESTINATION .)
 
-install(DIRECTORY ${PYTHON_VENV_DIR}
-        DESTINATION .
-        PATTERN "__pycache__" EXCLUDE
-        PATTERN "*.pyc" EXCLUDE
-        PATTERN "*.dist-info" EXCLUDE
-        PATTERN "*.egg-info" EXCLUDE)
+install(DIRECTORY "${VENV_SITE_PACKAGES}/"
+    DESTINATION "${PYTHON_MODULES_DIR}"
+    PATTERN "__pycache__" EXCLUDE
+    PATTERN "*.pyc" EXCLUDE
+    PATTERN "*.dist-info" EXCLUDE
+    PATTERN "*.egg-info" EXCLUDE
+)
 
 if(WIN32)
     if(QT_PLATFORMS_DIR)
