@@ -2,7 +2,8 @@
 
 namespace trnist
 {
-	struct __attribute__((visibility("default"))) PythonGuard::PythonRuntime
+	// __attribute__((visibility("default")))
+	struct PythonGuard::PythonRuntime
 	{
 		py::scoped_interpreter interpreter;
 	};

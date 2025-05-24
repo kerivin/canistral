@@ -267,6 +267,8 @@ else()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror -fPIC)
 endif()
 
+target_compile_options(${PROJECT_NAME} PRIVATE -fvisibility=hidden)
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     QT_NO_KEYWORDS
     PYTHON_EXECUTABLE=${Python3_EXECUTABLE}
