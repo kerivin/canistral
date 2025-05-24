@@ -177,19 +177,6 @@ set_target_properties(${SQLite3_LIBRARY} PROPERTIES LINKER_LANGUAGE C)
 target_include_directories(${SQLite3_LIBRARY} PUBLIC ${SQLite3_INCLUDE_DIR})
 
 #-----------------------------------------------------------------------------
-# PRE-BUILD GENERATE FILES
-#-----------------------------------------------------------------------------
-
-set(PYTHON_RUNTIME_HOME ${PYTHONHOME})
-set(PYTHON_RUNTIME ${})
-
-configure_file(
-    ${CMAKE_SOURCE_DIR}/src/python_init.cpp.in
-    ${CMAKE_BINARY_DIR}/generated/python_init.cpp
-    @ONLY
-)
-
-#-----------------------------------------------------------------------------
 # EXECUTABLE SETUP
 #-----------------------------------------------------------------------------
 

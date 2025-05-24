@@ -39,7 +39,10 @@ int main(int argc, char *argv[])
 		{
 			trnist::py::scoped_interpreter guard{};
 			py::module_ sys = py::module_::import("sys");
-			py::module_::import("sys").attr("path").attr("append")("./python_modules");
+
+			fs::path exe_dir = fs::path(argv[0]).parent_path();
+			fs::path py_modules_path = exe_dir / "python_modules";
+			py::module_::import("sys").attr("path").attr("append")(py_modules_path.string());
 
 			QMessageBox::information(nullptr, "Python version", QString::fromStdString(sys.attr("version").cast<std::string>()));
 
