@@ -48,7 +48,7 @@ if(WIN32)
         REQUIRED
     )
     install(FILES ${PYTHON3_DLL}
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        DESTINATION .
         CONFIGURATIONS Release Debug RelWithDebInfo MinSizeRel
     )
 	if(QT_PLATFORMS_DIR)
