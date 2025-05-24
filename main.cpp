@@ -36,7 +36,11 @@ int main(int argc, char *argv[])
             trnist::py::scoped_interpreter guard{};
             auto sys = trnist::py::module_::import("sys");
             QMessageBox::information(nullptr, "Python version", QString::fromStdString(sys.attr("version").cast<std::string>()));
-            QMessageBox::information(nullptr, "Python version", QString::fromStdString(sys.attr("path").cast<std::string>()));
+            const auto path_list = sys.attr("path").cast<trnist::py::list>();
+            QString qpath;
+            for (const auto& path : path_list)
+                qpath.append(QString::fromStdString(path.cast<std::string>()) + "\n");
+            QMessageBox::information(nullptr, "Python path", qpath);
         }
         catch (const std::exception &e)
         {
