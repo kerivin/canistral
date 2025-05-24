@@ -28,10 +28,6 @@ int main(int argc, char *argv[])
 
 		try
 		{
-			py::exec(R"(
-				import os
-				os.environ['EXECJS_RUNTIME'] = 'node'
-				)");
 			py::module_ sys = py::module_::import("sys");
 
 			fs::path exe_dir = fs::path(argv[0]).parent_path();
