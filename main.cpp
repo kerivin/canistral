@@ -30,12 +30,12 @@ int main(int argc, char *argv[])
 		{
 			py::module_ sys = py::module_::import("sys");
 			fs::path exe_dir = fs::path(argv[0]).parent_path();
-			fs::path py_modules_path = exe_dir / "python_modules";
+			fs::path py_modules_path = exe_dir / "py_modules";
 			py::module_::import("sys").attr("path").attr("append")(py_modules_path.string());
 
 			py::exec(R"(
-				import qt_exejs
 				import exejs
+				import qt_exejs
 
 				exejs.runtime = qt_exejs.runtime
 				exejs.compile = qt_exejs.compile
@@ -43,8 +43,6 @@ int main(int argc, char *argv[])
 				exejs.evaluate = qt_exejs.evaluate
 				exejs.Tse = qt_exejs.Tse
 				exejs.tse = qt_exejs.tse
-
-				print(f"exejs runtime is now: {exejs.runtime.name}")
 			)");
 		}
 		catch (const std::exception &e)

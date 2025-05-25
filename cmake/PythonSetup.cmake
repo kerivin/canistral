@@ -31,7 +31,11 @@ endif()
 #-----------------------------------------------------------------------------
 
 execute_process(
-    COMMAND ${VENV_PIP_EXECUTABLE} install --upgrade translators python-iso639 "PyQt6==${Qt6_VERSION}" "PyQt6-Qt6==${Qt6_VERSION}"
+    COMMAND ${VENV_PIP_EXECUTABLE} install --upgrade
+    translators
+    python-iso639
+    PyQt6==${Qt6_VERSION}
+    PyQt6-Qt6==${Qt6_VERSION}
 )
 
 #-----------------------------------------------------------------------------
