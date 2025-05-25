@@ -81,3 +81,17 @@ else()
 endif()
 
 include(CPack)
+
+# Linux/macOS stripping
+if(UNIX AND NOT APPLE)
+  install(CODE "execute_process(
+    COMMAND find ${CMAKE_INSTALL_PREFIX} -name \"*.so\" -exec strip {} \;
+  )")
+endif()
+
+# Windows UPX compression (optional)
+if(WIN32 AND EXISTS "C:/upx/upx.exe")
+  install(CODE "execute_process(
+    COMMAND C:/upx/upx --best ${CMAKE_INSTALL_PREFIX}/${PYTHON_MODULES_DIR}/PyQt6/*.dll
+  )")
+endif()
