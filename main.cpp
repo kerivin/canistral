@@ -2,7 +2,6 @@
 #include <QApplication>
 #include <QMainWindow>
 #include <QMessageBox>
-#include <QQmlEngine>
 #include "core/translation/api_translator.h"
 #include "core/translation/context.h"
 #include "pybind.h"
@@ -14,10 +13,6 @@ int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
 	QMainWindow mainWindow;
-	QQmlEngine engine;
-
-	mainWindow.resize(800, 600);
-	mainWindow.show();
 
 	trnist::py::scoped_interpreter guard{};
 
@@ -26,6 +21,7 @@ int main(int argc, char *argv[])
 		py::module_ sys = py::module_::import("sys");
 		fs::path exe_dir = fs::path(argv[0]).parent_path();
 		sys.attr("path").attr("append")(fs::path(exe_dir / "py_modules").string());
+		
 		py::exec(R"(
 			import sys
 			import qt_exejs
