@@ -12,11 +12,11 @@ using namespace trnist;
 int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
-	trnist::py::scoped_interpreter guard{};
-
 	QMainWindow mainWindow;
 	mainWindow.resize(800, 600);
 	mainWindow.show();
+
+	trnist::py::scoped_interpreter guard{};
 
 	try
 	{
