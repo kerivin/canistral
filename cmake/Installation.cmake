@@ -30,7 +30,7 @@ install(TARGETS ${PROJECT_NAME}
 
 install(
     DIRECTORY 
-        ${CMAKE_CURRENT_SOURCE_DIR}/py
+        ${CMAKE_CURRENT_SOURCE_DIR}/py/
         ${VENV_SITE_PACKAGES}/
     DESTINATION 
         ${PYTHON_MODULES_DIR}

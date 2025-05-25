@@ -30,18 +30,19 @@ int main(int argc, char *argv[])
 		{
 			py::module_ sys = py::module_::import("sys");
 			fs::path exe_dir = fs::path(argv[0]).parent_path();
-			py::module_::import("sys").attr("path").attr("append")(fs::path(exe_dir / "py_modules").string());
+			sys.attr("path").attr("append")(fs::path(exe_dir / "py_modules").string());
+
+			try {
+				py::module_ qt_exejs = py::module_::import("qt_exejs");
+			} catch (py::error_already_set &e) {
+				QMessageBox::critical(nullptr, "Error", e.what());
+			}
 
 			py::exec(R"(
-				import exejs
+				import sys
 				import qt_exejs
-
-				exejs.runtime = qt_exejs.runtime
-				exejs.compile = qt_exejs.compile
-				exejs.execute = qt_exejs.execute
-				exejs.evaluate = qt_exejs.evaluate
-				exejs.Tse = qt_exejs.Tse
-				exejs.tse = qt_exejs.tse
+				sys.modules['exejs'] = qt_exejs
+				exejs = qt_exejs
 			)");
 		}
 		catch (const std::exception &e)
