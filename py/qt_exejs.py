@@ -1,10 +1,9 @@
-from PyQt6.QtQml import QJSEngine
 import json
 import re
 
 class QtRuntime:
     def __init__(self):
-        self.engine = QJSEngine()
+        self.engine = self._get_js_engine()
         self.name = "QtJSEngine"
         self.command = ["qtjs"]  # Dummy value for compatibility
         self.run_source = ""     # Not used in Qt implementation
@@ -14,6 +13,10 @@ class QtRuntime:
         
     def compile(self, source='', cwd=None):
         return QtCompileContext(self, source, cwd)
+    
+    def _get_js_engine(self):
+        from PyQt6.QtQml import QJSEngine
+        return QJSEngine()
 
 class QtCompileContext:
     def __init__(self, runtime, source='', cwd=None):
