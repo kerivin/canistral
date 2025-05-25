@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QMainWindow>
 #include <QMessageBox>
+#include <QQmlEngine>
 #include "core/translation/api_translator.h"
 #include "core/translation/context.h"
 #include "pybind.h"
@@ -13,6 +14,8 @@ int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
 	QMainWindow mainWindow;
+	QQmlEngine engine;
+
 	mainWindow.resize(800, 600);
 	mainWindow.show();
 
