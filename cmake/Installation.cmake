@@ -41,8 +41,6 @@ install(
 )
 
 if(WIN32)
-    install(FILES $<TARGET_FILE:Python3::Python> 
-        DESTINATION ${CMAKE_INSTALL_BINDIR})
 	if(QT_PLATFORMS_DIR)
 		install(DIRECTORY ${QT_PLATFORMS_DIR}/
 				DESTINATION platforms

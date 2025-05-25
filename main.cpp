@@ -31,13 +31,6 @@ int main(int argc, char *argv[])
 			py::module_ sys = py::module_::import("sys");
 			fs::path exe_dir = fs::path(argv[0]).parent_path();
 			sys.attr("path").attr("append")(fs::path(exe_dir / "py_modules").string());
-
-			try {
-				py::module_ qt_exejs = py::module_::import("qt_exejs");
-			} catch (py::error_already_set &e) {
-				QMessageBox::critical(nullptr, "Error", e.what());
-			}
-
 			py::exec(R"(
 				import sys
 				import qt_exejs
