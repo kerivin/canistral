@@ -1,4 +1,4 @@
-from PyQt6.QtQml import QJSEngine
+from PySide6.QtQml import QJSEngine
 import json
 import re
 
