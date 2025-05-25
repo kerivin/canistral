@@ -25,23 +25,15 @@ int main(int argc, char *argv[])
 	// else
 	{
 		trnist::py::scoped_interpreter guard{};
-
-		try
-		{
-			py::module_ sys = py::module_::import("sys");
-			fs::path exe_dir = fs::path(argv[0]).parent_path();
-			sys.attr("path").attr("append")(fs::path(exe_dir / "py_modules").string());
-			py::exec(R"(
-				import sys
-				import qt_exejs
-				sys.modules['exejs'] = qt_exejs
-				exejs = qt_exejs
-			)");
-		}
-		catch (const std::exception &e)
-		{
-			QMessageBox::critical(nullptr, "Error", e.what());
-		}
+		py::module_ sys = py::module_::import("sys");
+		fs::path exe_dir = fs::path(argv[0]).parent_path();
+		sys.attr("path").attr("append")(fs::path(exe_dir / "py_modules").string());
+		py::exec(R"(
+			import sys
+			import qt_exejs
+			sys.modules['exejs'] = qt_exejs
+			exejs = qt_exejs
+		)");
 
 		QMainWindow mainWindow;
 		mainWindow.resize(800, 600);
